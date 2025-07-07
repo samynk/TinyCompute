@@ -104,7 +104,7 @@ namespace sf {
 			vec_base<bool, N> result;
 			for (std::size_t i = 0; i < data.size(); ++i)
 			{
-				result[i] = (data[i] != other.data[i]);
+				result[i] = (data[i] == other.data[i]);
 			}
 		}
 
