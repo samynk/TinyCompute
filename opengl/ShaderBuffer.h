@@ -36,7 +36,7 @@ private:
 };
 
 template <typename T, unsigned Size, unsigned Set, unsigned Binding>
-ShaderBuffer<T, Size,Set,Binding>::ShaderBuffer()
+ShaderBuffer<T, Size, Set, Binding>::ShaderBuffer()
 {
 	glGenBuffers(1, &m_SSBO_ID);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_SSBO_ID);

@@ -1,16 +1,9 @@
-// main.cpp : Defines the entry point for the application.
-//
 #pragma once
 #include <array>
 #include <cassert>
 
-
-using namespace std;
-
 template<unsigned Mask, unsigned Len>
 struct SwizzleMask {};
-
-
 
 template<typename Char, size_t N>
 struct my_fixed_string

@@ -40,22 +40,28 @@ int main(void)
 	sf::vec3 result = v1 + v2;
 	std::cout << "Result:" << result << std::endl;
 
-	// swizzle right value
+	//// swizzle right value
 	sf::vec2 resultXZ = result["xz"_sw];
 	std::cout << "Result:" << resultXZ << std::endl;
 
-	// swizzle left value
+	//// swizzle left value
 	v1["x"_sw] = 3.0;
 	std::cout << "v1:" << v1 << std::endl;
 
-	sf::vec4 v3(2, 3, 4, 5);
-	// swizzle right value, swizzle left value
+	sf::vec4 v3(2, 1, 4, 1);
+	std::cout << "v2:" << v2 << std::endl;
+	std::cout << "v3:" << v3 << std::endl;
+	
+
+	//// swizzle right value, swizzle left value
 	v3["yw"_sw] = v2["xz"_sw];
 	std::cout << "Result:" << v3 << std::endl;
 
 
 	sf::vec4 v4(2, sf::vec2(1, 3), 3);
 	std::cout << "Result:" << v4 << std::endl;
+
+	float w = v4["w"_sw];
 
 	_unroll_check();
 

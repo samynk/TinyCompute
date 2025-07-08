@@ -100,6 +100,12 @@ namespace sf {
 			return r;
 		}
 
+		template<unsigned Mask>
+		constexpr auto operator[](const SwizzleMask<Mask, 1>) const {
+			T r = data[Mask&0x3];
+			return r;
+		}
+
 		constexpr vec_base<bool,N> operator==(const vec_base<T, N>& other) const {
 			vec_base<bool, N> result;
 			for (std::size_t i = 0; i < data.size(); ++i)
@@ -107,13 +113,6 @@ namespace sf {
 				result[i] = (data[i] == other.data[i]);
 			}
 		}
-
-		constexpr bool operator!=(const vec_base<T, N>& other) const {
-			return !(*this == other);
-		}
-
-
-
 
 		// Debug print
 		friend std::ostream& operator<<(std::ostream& os, const vec_base& v) {
@@ -132,7 +131,7 @@ namespace sf {
 			vec_base<T, N>& parent;
 
 			// implicit read‑conversion to real vec
-			operator vec_base<T, Len>() const
+			constexpr operator std::remove_const_t<vec_base<T, Len>>() const
 			{
 				vec_base<T, Len> r;
 				for (std::size_t i = 0; i < Len; ++i) {
@@ -142,9 +141,15 @@ namespace sf {
 				return r;
 			}
 
-			// write from another vec
-			swizzle_proxy& operator=(const vec_base<T, Len>& rhs)
+			constexpr operator std::remove_const_t<T>() const
 			{
+				static_assert(Len == 1, "only valid for Len==1");
+				return parent.data[Mask & 0x3];
+			}
+
+			constexpr swizzle_proxy& operator=(std::remove_const_t<vec_base<T, Len>> const& rhs)
+			{
+				// static_assert(Len > 1, "only valid for Len>1");
 				for (std::size_t i = 0; i < Len; ++i) {
 					unsigned idx = (Mask >> ((Len - 1 - i) * 2)) & 0x3;
 					parent.data[idx] = rhs[i];
@@ -152,6 +157,15 @@ namespace sf {
 				return *this;
 			}
 
+			// assignment to scalar (Len==1)
+			/*constexpr swizzle_proxy& operator=(std::remove_const_t<T> rhs)
+			{
+				static_assert(Len == 1, "only valid for Len==1");
+				parent.data[Mask & 0x3] = rhs;
+				return *this;
+			}*/
+
+			/*
 			// write from scalar (broadcast)
 			template<std::convertible_to<T> S>
 			swizzle_proxy& operator=(S s)
@@ -161,15 +175,32 @@ namespace sf {
 					parent.data[idx] = static_cast<T>(s);
 				}
 				return *this;
-			}
+			}*/
 		};
 
 
+		// non-const vector → mutable proxy
 		template<unsigned Mask, unsigned Len>
-		constexpr auto operator[](const SwizzleMask<Mask, Len>)
+		constexpr auto operator[](SwizzleMask<Mask, Len>)
 			-> swizzle_proxy<T, N, Mask, Len>
 		{
 			return { *this };
+		}
+
+		// const vector → const proxy
+		template<unsigned Mask, unsigned Len>
+		constexpr auto operator[](SwizzleMask<Mask, Len>) const
+			-> swizzle_proxy<const T, N, Mask, Len>
+		{
+			return { *this };
+		}
+
+		template<unsigned Mask>
+		constexpr auto operator[](const SwizzleMask<Mask, 1>) const
+			-> T
+		{
+			T r = data[Mask & 0x3];
+			return r;
 		}
 
 private:
