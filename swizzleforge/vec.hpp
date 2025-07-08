@@ -11,7 +11,7 @@ namespace sf {
 	concept VecSize = (N == 2 || N == 3 || N == 4);
 
 	template<typename V>
-	concept FloatVec = std::floating_point<typename V::value_type>;
+        concept FloatVec = std::floating_point<typename V::value_type>;
 
 
 	template<typename T, std::size_t N>
@@ -21,13 +21,13 @@ namespace sf {
 		struct comp_count :std::integral_constant<std::size_t, 1> {};
 
 		// partial specialisation ⇒ a vector contributes its dimension N
-		template<typename T,std::size_t N>
-		struct comp_count<vec_base<T, N>> : std::integral_constant<std::size_t, N> {};
+                template<typename U2, std::size_t M>
+                struct comp_count<vec_base<U2, M>> : std::integral_constant<std::size_t, M> {};
 
 		// scalar types are not vecs
-		template<class T> struct is_vec : std::false_type {};
-		// vec_base are vecs
-		template<class T, std::size_t M> struct is_vec<sf::vec_base<T, M>> : std::true_type {};
+                template<class U> struct is_vec : std::false_type {};
+                // vec_base are vecs
+                template<class U2, std::size_t M> struct is_vec<sf::vec_base<U2, M>> : std::true_type {};
 
 		template<class U>
 		static const bool is_vec_v = is_vec<std::remove_cvref_t<U>>::value;
@@ -106,13 +106,14 @@ namespace sf {
 			return r;
 		}
 
-		constexpr vec_base<bool,N> operator==(const vec_base<T, N>& other) const {
-			vec_base<bool, N> result;
-			for (std::size_t i = 0; i < data.size(); ++i)
-			{
-				result[i] = (data[i] == other.data[i]);
-			}
-		}
+                constexpr vec_base<bool,N> operator==(const vec_base<T, N>& other) const {
+                        vec_base<bool, N> result;
+                        for (std::size_t i = 0; i < data.size(); ++i)
+                        {
+                                result[i] = (data[i] == other.data[i]);
+                        }
+                        return result;
+                }
 
 		// Debug print
 		friend std::ostream& operator<<(std::ostream& os, const vec_base& v) {
@@ -125,37 +126,37 @@ namespace sf {
 			return os;
 		}
 
-		template<typename T, std::size_t N, unsigned Mask, unsigned Len>
-		struct swizzle_proxy
-		{
-			vec_base<T, N>& parent;
+                template<typename U, std::size_t M, unsigned Mask, unsigned Len>
+                struct swizzle_proxy
+                {
+                        vec_base<U, M>& parent;
 
 			// implicit read‑conversion to real vec
-			constexpr operator std::remove_const_t<vec_base<T, Len>>() const
-			{
-				vec_base<T, Len> r;
+                        constexpr operator std::remove_const_t<vec_base<U, Len>>() const
+                        {
+                                vec_base<U, Len> r;
 				for (std::size_t i = 0; i < Len; ++i) {
 					unsigned idx = (Mask >> ((Len - 1 - i) * 2)) & 0x3;
-					r[i] = parent.data[idx];
-				}
-				return r;
-			}
+                                        r[i] = parent.data[idx];
+                                }
+                                return r;
+                        }
 
-			constexpr operator std::remove_const_t<T>() const
+                        constexpr operator std::remove_const_t<U>() const
 			{
 				static_assert(Len == 1, "only valid for Len==1");
 				return parent.data[Mask & 0x3];
 			}
 
-			constexpr swizzle_proxy& operator=(std::remove_const_t<vec_base<T, Len>> const& rhs)
-			{
+                        constexpr swizzle_proxy& operator=(std::remove_const_t<vec_base<U, Len>> const& rhs)
+                        {
 				// static_assert(Len > 1, "only valid for Len>1");
 				for (std::size_t i = 0; i < Len; ++i) {
 					unsigned idx = (Mask >> ((Len - 1 - i) * 2)) & 0x3;
-					parent.data[idx] = rhs[i];
-				}
-				return *this;
-			}
+                                        parent.data[idx] = rhs[i];
+                                }
+                                return *this;
+                        }
 
 			// assignment to scalar (Len==1)
 			/*constexpr swizzle_proxy& operator=(std::remove_const_t<T> rhs)
@@ -204,19 +205,19 @@ namespace sf {
 		}
 
 private:
-			template<class T, class Arg>
+                        template<class U, class Arg>
 				
 			constexpr auto flatten_arg(const Arg& a)
 			{
 				if constexpr (is_vec_v<Arg>)
 				{
-					std::array<T, std::remove_cvref_t<Arg>::size> out{};
-					for (std::size_t i = 0; i < out.size(); ++i) out[i] = static_cast<T>(a[i]);
+                                        std::array<U, std::remove_cvref_t<Arg>::size> out{};
+                                        for (std::size_t i = 0; i < out.size(); ++i) out[i] = static_cast<U>(a[i]);
 					return out;
 				}
 				else
 				{
-					return std::array<T, 1>{ static_cast<T>(a) };
+                                        return std::array<U, 1>{ static_cast<U>(a) };
 				}
 			}
 	};
@@ -264,9 +265,9 @@ private:
 
 
 	// dot product ---------------------------------------------------
-	template<typename T, std::size_t N>
-		requires VecSize<N>&& FloatVec<T>
-	constexpr typename T dot(const vec_base<T, N>& a, const vec_base<T, N>& b)
+        template<typename T, std::size_t N>
+                requires VecSize<N> && std::floating_point<T>
+        constexpr T dot(const vec_base<T, N>& a, const vec_base<T, N>& b)
 	{
 		T sum = 0;
 		for (std::size_t i = 0; i < N; ++i) sum += a[i] * b[i];
