@@ -1,6 +1,17 @@
 #include <iostream>
 #include <vector>
 
+#include <clang/Tooling/CommonOptionsParser.h>
+#include <clang/Tooling/Tooling.h>
+#include <clang/Frontend/FrontendActions.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/ASTConsumer.h>
+#include <clang/ASTMatchers/ASTMatchers.h>
+#include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <llvm/Support/CommandLine.h>
+#include <iostream>
+
 int main(int argc, char* argv[])
 {
 

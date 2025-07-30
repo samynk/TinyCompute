@@ -77,7 +77,10 @@ if (SWIZZLEFORGE_BUILD_EXAMPLES)
     add_subdirectory(examples)
     add_subdirectory(Project00)
     set_target_properties(Project00 PROPERTIES FOLDER "03‑Examples")
+    add_subdirectory(Projects/Project01)
+    set_target_properties(Project01 PROPERTIES FOLDER "03‑Examples")
 endif()
+
 
 # After you call add_subdirectory(llvm)  — or whatever brings them in
 foreach(t

@@ -2,19 +2,9 @@
     main.cpp
 )
 
-# Source kernel and generated outputs
-set(KERNEL_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
-set(GLSL_OUT    ${CMAKE_CURRENT_BINARY_DIR}/main.glsl)
-set(SPIRV_OUT   ${CMAKE_CURRENT_BINARY_DIR}/main.spv)
+target_compile_features(swizzleforge_demo PUBLIC cxx_std_20)
 
-# 1) Transpile C++  →  GLSL
-add_custom_command(
-    TARGET swizzleforge_demo
-    COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT}
-    DEPENDS sf_transpile  ${KERNEL_SRC}            # <- important!
-    COMMENT "Transpiling ${KERNEL_SRC}"
-    USES_TERMINAL 
-)
+
 
 target_link_libraries(swizzleforge_demo
     PRIVATE

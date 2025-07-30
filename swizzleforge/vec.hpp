@@ -2,6 +2,7 @@
 
 #include <array>
 #include <iostream>
+#include <concepts>
 #include "swizzle.hpp"
 
 
@@ -10,18 +11,29 @@ namespace sf {
 	template<std::size_t N>
 	concept VecSize = (N == 2 || N == 3 || N == 4);
 
-	template<typename V>
-	concept FloatVec = std::floating_point<typename V::value_type>;
+	template<typename T>
+	concept GLSLFloatType = std::same_as<T, float> || std::same_as<T, double>;
+
+	template<typename T>
+	concept GLSLIntegerType = std::same_as<T, std::int32_t> || std::same_as<T, std::uint32_t>;
+
+	template<typename T>
+	concept GLSLNumericType = GLSLFloatType<T> || GLSLIntegerType<T>;
+
+	template<typename T>
+	concept GLSLType = GLSLNumericType<T> || std::same_as<T, bool>;
+
 
 
 	template<typename T, std::size_t N>
+		requires GLSLType<T> and VecSize<N>
 	class vec_base {
 		// primary template ⇒ any non‑vector type counts as 1
 		template<class U>
 		struct comp_count :std::integral_constant<std::size_t, 1> {};
 
-		// partial specialisation ⇒ a vector contributes its dimension N
-		template<typename T,std::size_t N>
+		// partial specialization ⇒ a vector contributes its dimension N
+		template<typename T, std::size_t N>
 		struct comp_count<vec_base<T, N>> : std::integral_constant<std::size_t, N> {};
 
 		// scalar types are not vecs
@@ -31,7 +43,7 @@ namespace sf {
 
 		template<class U>
 		static const bool is_vec_v = is_vec<std::remove_cvref_t<U>>::value;
-		
+
 
 		// convenience variable template
 		template<class U>
@@ -61,11 +73,6 @@ namespace sf {
 			data.fill(static_cast<T>(value));
 		}
 
-		// Variadic constructor for e.g. Vec<float,3> v(1.0f, 2.0f, 3.0f);
-		/*template<typename... Args,
-			typename = std::enable_if_t<sizeof...(Args) == N>>
-			constexpr vec_base(Args... args) : data{ static_cast<T>(args)... } {}*/
-
 		template<class... Args>
 			requires ((comp_count_v<Args> +...) == N)
 		constexpr explicit vec_base(const Args&... args)
@@ -79,7 +86,7 @@ namespace sf {
 		}
 
 
-			// Index access
+		// rvalue
 		constexpr T& operator[](std::size_t i) {
 			assert(i < N);
 			return data[i];
@@ -102,16 +109,17 @@ namespace sf {
 
 		template<unsigned Mask>
 		constexpr auto operator[](const SwizzleMask<Mask, 1>) const {
-			T r = data[Mask&0x3];
+			T r = data[Mask & 0x3];
 			return r;
 		}
 
-		constexpr vec_base<bool,N> operator==(const vec_base<T, N>& other) const {
+		constexpr vec_base<bool, N> operator==(const vec_base<T, N>& other) const {
 			vec_base<bool, N> result;
 			for (std::size_t i = 0; i < data.size(); ++i)
 			{
 				result[i] = (data[i] == other.data[i]);
 			}
+			return result;
 		}
 
 		// Debug print
@@ -126,7 +134,7 @@ namespace sf {
 		}
 
 		template<typename T, std::size_t N, unsigned Mask, unsigned Len>
-		struct swizzle_proxy
+		struct vec_proxy
 		{
 			vec_base<T, N>& parent;
 
@@ -141,153 +149,113 @@ namespace sf {
 				return r;
 			}
 
-			constexpr operator std::remove_const_t<T>() const
+			constexpr vec_proxy& operator=(std::remove_const_t<vec_base<T, Len>> const& rhs)
 			{
-				static_assert(Len == 1, "only valid for Len==1");
-				return parent.data[Mask & 0x3];
-			}
-
-			constexpr swizzle_proxy& operator=(std::remove_const_t<vec_base<T, Len>> const& rhs)
-			{
-				// static_assert(Len > 1, "only valid for Len>1");
 				for (std::size_t i = 0; i < Len; ++i) {
 					unsigned idx = (Mask >> ((Len - 1 - i) * 2)) & 0x3;
 					parent.data[idx] = rhs[i];
 				}
 				return *this;
 			}
-
-			// assignment to scalar (Len==1)
-			/*constexpr swizzle_proxy& operator=(std::remove_const_t<T> rhs)
-			{
-				static_assert(Len == 1, "only valid for Len==1");
-				parent.data[Mask & 0x3] = rhs;
-				return *this;
-			}*/
-
-			/*
-			// write from scalar (broadcast)
-			template<std::convertible_to<T> S>
-			swizzle_proxy& operator=(S s)
-			{
-				for (std::size_t i = 0; i < Len; ++i) {
-					unsigned idx = (Mask >> ((Len - 1 - i) * 2)) & 0x3;
-					parent.data[idx] = static_cast<T>(s);
-				}
-				return *this;
-			}*/
 		};
 
+		template<typename T, std::size_t N, unsigned Mask>
+		struct vec_proxy<T, N, Mask, 1>
+		{
+			vec_base<T, N>& parent;
+
+			constexpr operator std::remove_const_t<T>() const
+			{
+				return parent.data[Mask & 0x3];
+			}
+
+			constexpr vec_proxy& operator=(T value)
+			{
+				parent.data[Mask & 0x3] = value;
+				return *this;
+			}
+
+		};
 
 		// non-const vector → mutable proxy
 		template<unsigned Mask, unsigned Len>
 		constexpr auto operator[](SwizzleMask<Mask, Len>)
-			-> swizzle_proxy<T, N, Mask, Len>
+			-> vec_proxy<T, N, Mask, Len>
 		{
 			return { *this };
 		}
 
-		// const vector → const proxy
-		template<unsigned Mask, unsigned Len>
-		constexpr auto operator[](SwizzleMask<Mask, Len>) const
-			-> swizzle_proxy<const T, N, Mask, Len>
-		{
-			return { *this };
-		}
 
-		template<unsigned Mask>
-		constexpr auto operator[](const SwizzleMask<Mask, 1>) const
-			-> T
-		{
-			T r = data[Mask & 0x3];
-			return r;
-		}
 
-private:
-			template<class T, class Arg>
-				
-			constexpr auto flatten_arg(const Arg& a)
+	private:
+		template<class T, class Arg>
+
+		constexpr auto flatten_arg(const Arg& a)
+		{
+			if constexpr (is_vec_v<Arg>)
 			{
-				if constexpr (is_vec_v<Arg>)
-				{
-					std::array<T, std::remove_cvref_t<Arg>::size> out{};
-					for (std::size_t i = 0; i < out.size(); ++i) out[i] = static_cast<T>(a[i]);
-					return out;
-				}
-				else
-				{
-					return std::array<T, 1>{ static_cast<T>(a) };
-				}
+				std::array<T, std::remove_cvref_t<Arg>::size> out{};
+				for (std::size_t i = 0; i < out.size(); ++i) out[i] = static_cast<T>(a[i]);
+				return out;
 			}
+			else
+			{
+				return std::array<T, 1>{ static_cast<T>(a) };
+			}
+		}
 	};
 
 
-	// numeric operators
-	// vector + vector (same N) --------------------------------------
-	template<typename T, std::size_t N>
-	constexpr sf::vec_base<T, N> operator+(sf::vec_base<T, N> lhs, sf::vec_base<T, N> rhs)
-	{
-		for (std::size_t i = 0; i < N; ++i) lhs[i] += rhs[i];
-		return lhs;
-	}
-
-	// scalar broadcast ----------------------------------------------
-	template<typename T, std::size_t N, typename S>
-		requires std::convertible_to<S, T>
-	constexpr sf::vec_base<T, N> operator+(sf::vec_base<T, N> v, S s)
-	{
-		return v + sf::vec_base<T, N>(static_cast<T>(s));
-	}
-
-	template<typename T, std::size_t N>
-	constexpr sf::vec_base<T, N> operator*(sf::vec_base<T, N> lhs, sf::vec_base<T, N> rhs)
-	{
-		for (std::size_t i = 0; i < N; ++i) lhs[i] *= rhs[i];
-		return lhs;
-	}
-
-	// scalar broadcast of product ----------------------------------------------
-	template<typename T, std::size_t N, typename S>
-		requires std::convertible_to<S, T>
-	constexpr sf::vec_base<T, N> operator*(sf::vec_base<T, N> v, S s)
-	{
-		return v * sf::vec_base<T, N>(static_cast<T>(s));
-	}
-
-	template<typename T, std::size_t N>
-	constexpr sf::vec_base<T, N> operator-(sf::vec_base<T, N> lhs, sf::vec_base<T, N> rhs)
-	{
-		for (std::size_t i = 0; i < N; ++i) lhs[i] -= rhs[i];
-		return lhs;
-	}
-
+	
 
 
 	// dot product ---------------------------------------------------
 	template<typename T, std::size_t N>
-		requires VecSize<N>&& FloatVec<T>
-	constexpr typename T dot(const vec_base<T, N>& a, const vec_base<T, N>& b)
+		requires VecSize<N>&& GLSLFloatType<T>
+	T dot(const vec_base<T, N>& a, const vec_base<T, N>& b)
 	{
 		T sum = 0;
 		for (std::size_t i = 0; i < N; ++i) sum += a[i] * b[i];
 		return sum;
 	}
 
+	template<typename T, std::size_t N>
+		requires VecSize<N>&& std::same_as<T, bool>
+	bool all(const vec_base<T, N>& v) noexcept {
+		for (std::size_t i = 0; i < N; ++i) {
+			if (!v[i]) return false;
+		}
+		return true;
+	}
 
+	template<typename T, std::size_t N>
+		requires VecSize<N>&& std::same_as<T, bool>
+	bool any(const vec_base<T, N>& v) noexcept {
+		for (std::size_t i = 0; i < N; ++i) {
+			if (v[i]) return true;
+		}
+		return false;
+	}
 
-
+	
 
 	using vec2 = vec_base<float, 2>;
 	using vec3 = vec_base<float, 3>;
 	using vec4 = vec_base<float, 4>;
 
-	using ivec2 = vec_base<int, 2>;
-	using ivec3 = vec_base<int, 3>;
-	using ivec4 = vec_base<int, 4>;
+	using dvec2 = vec_base<double, 2>;
+	using dvec3 = vec_base<double, 3>;
+	using dvec4 = vec_base<double, 4>;
 
-	using uvec2 = vec_base<unsigned int, 2>;
-	using uvec3 = vec_base<unsigned int, 3>;
-	using uvec4 = vec_base<unsigned int, 4>;
+	using integer = std::int32_t;
+	using ivec2 = vec_base<std::int32_t, 2>;
+	using ivec3 = vec_base<std::int32_t, 3>;
+	using ivec4 = vec_base<std::int32_t, 4>;
+
+	using uint = std::uint32_t;
+	using uvec2 = vec_base<std::uint32_t, 2>;
+	using uvec3 = vec_base<std::uint32_t, 3>;
+	using uvec4 = vec_base<std::uint32_t, 4>;
 
 	using bvec2 = vec_base<bool, 2>;
 	using bvec3 = vec_base<bool, 3>;
