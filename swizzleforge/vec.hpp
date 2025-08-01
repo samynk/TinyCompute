@@ -33,13 +33,13 @@ namespace sf {
 		struct comp_count :std::integral_constant<std::size_t, 1> {};
 
 		// partial specialization ⇒ a vector contributes its dimension N
-		template<typename T, std::size_t N>
-		struct comp_count<vec_base<T, N>> : std::integral_constant<std::size_t, N> {};
+		template<typename IT, std::size_t IN>
+		struct comp_count<vec_base<IT, IN>> : std::integral_constant<std::size_t, IN> {};
 
 		// scalar types are not vecs
-		template<class T> struct is_vec : std::false_type {};
+		template<class IT> struct is_vec : std::false_type {};
 		// vec_base are vecs
-		template<class T, std::size_t M> struct is_vec<sf::vec_base<T, M>> : std::true_type {};
+		template<class IT, std::size_t IN> struct is_vec<sf::vec_base<IT, IN>> : std::true_type {};
 
 		template<class U>
 		static const bool is_vec_v = is_vec<std::remove_cvref_t<U>>::value;
@@ -133,15 +133,15 @@ namespace sf {
 			return os;
 		}
 
-		template<typename T, std::size_t N, unsigned Mask, unsigned Len>
+		template<typename IT, std::size_t IN, unsigned Mask, unsigned Len>
 		struct vec_proxy
 		{
-			vec_base<T, N>& parent;
+			vec_base<IT, IN>& parent;
 
 			// implicit read‑conversion to real vec
-			constexpr operator std::remove_const_t<vec_base<T, Len>>() const
+			constexpr operator std::remove_const_t<vec_base<IT, Len>>() const
 			{
-				vec_base<T, Len> r;
+				vec_base<IT, Len> r;
 				for (std::size_t i = 0; i < Len; ++i) {
 					unsigned idx = (Mask >> ((Len - 1 - i) * 2)) & 0x3;
 					r[i] = parent.data[idx];
@@ -149,7 +149,7 @@ namespace sf {
 				return r;
 			}
 
-			constexpr vec_proxy& operator=(std::remove_const_t<vec_base<T, Len>> const& rhs)
+			constexpr vec_proxy& operator=(std::remove_const_t<vec_base<IT, Len>> const& rhs)
 			{
 				for (std::size_t i = 0; i < Len; ++i) {
 					unsigned idx = (Mask >> ((Len - 1 - i) * 2)) & 0x3;
@@ -159,17 +159,17 @@ namespace sf {
 			}
 		};
 
-		template<typename T, std::size_t N, unsigned Mask>
-		struct vec_proxy<T, N, Mask, 1>
+		template<typename IT, std::size_t IN, unsigned Mask>
+		struct vec_proxy<IT, IN, Mask, 1>
 		{
 			vec_base<T, N>& parent;
 
-			constexpr operator std::remove_const_t<T>() const
+			constexpr operator std::remove_const_t<IT>() const
 			{
 				return parent.data[Mask & 0x3];
 			}
 
-			constexpr vec_proxy& operator=(T value)
+			constexpr vec_proxy& operator=(IT value)
 			{
 				parent.data[Mask & 0x3] = value;
 				return *this;
@@ -188,19 +188,18 @@ namespace sf {
 
 
 	private:
-		template<class T, class Arg>
-
+		template<class IT, class Arg>
 		constexpr auto flatten_arg(const Arg& a)
 		{
 			if constexpr (is_vec_v<Arg>)
 			{
-				std::array<T, std::remove_cvref_t<Arg>::size> out{};
-				for (std::size_t i = 0; i < out.size(); ++i) out[i] = static_cast<T>(a[i]);
+				std::array<IT, std::remove_cvref_t<Arg>::size> out{};
+				for (std::size_t i = 0; i < out.size(); ++i) out[i] = static_cast<IT>(a[i]);
 				return out;
 			}
 			else
 			{
-				return std::array<T, 1>{ static_cast<T>(a) };
+				return std::array<IT, 1>{ static_cast<IT>(a) };
 			}
 		}
 	};
@@ -239,26 +238,26 @@ namespace sf {
 
 	
 
-	using vec2 = vec_base<float, 2>;
-	using vec3 = vec_base<float, 3>;
-	using vec4 = vec_base<float, 4>;
+	using vec2 = sf::vec_base<float, 2>;
+	using vec3 = sf::vec_base<float, 3>;
+	using vec4 = sf::vec_base<float, 4>;
 
-	using dvec2 = vec_base<double, 2>;
-	using dvec3 = vec_base<double, 3>;
-	using dvec4 = vec_base<double, 4>;
+	using dvec2 = sf::vec_base<double, 2>;
+	using dvec3 = sf::vec_base<double, 3>;
+	using dvec4 = sf::vec_base<double, 4>;
 
 	using integer = std::int32_t;
-	using ivec2 = vec_base<std::int32_t, 2>;
-	using ivec3 = vec_base<std::int32_t, 3>;
-	using ivec4 = vec_base<std::int32_t, 4>;
+	using ivec2 = sf::vec_base<std::int32_t, 2>;
+	using ivec3 = sf::vec_base<std::int32_t, 3>;
+	using ivec4 = sf::vec_base<std::int32_t, 4>;
 
 	using uint = std::uint32_t;
-	using uvec2 = vec_base<std::uint32_t, 2>;
-	using uvec3 = vec_base<std::uint32_t, 3>;
-	using uvec4 = vec_base<std::uint32_t, 4>;
+	using uvec2 = sf::vec_base<std::uint32_t, 2>;
+	using uvec3 = sf::vec_base<std::uint32_t, 3>;
+	using uvec4 = sf::vec_base<std::uint32_t, 4>;
 
-	using bvec2 = vec_base<bool, 2>;
-	using bvec3 = vec_base<bool, 3>;
-	using bvec4 = vec_base<bool, 4>;
+	using bvec2 = sf::vec_base<bool, 2>;
+	using bvec3 = sf::vec_base<bool, 3>;
+	using bvec4 = sf::vec_base<bool, 4>;
 }
 

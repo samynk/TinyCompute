@@ -1,19 +1,17 @@
 #pragma once
 
-#include <iostream>
-#include "vec.hpp"
-#include "computebackend.hpp"
+//#include <iostream>
 
 struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
-	sf::uvec3 local_size{ 18,18,1 };
+	/* sf::uvec3 local_size{ 18,18,1 };
 	// annotated buffers become GLSL SSBOs or UAVs
 	sf::BindingPoint<uint8_t, 0, 0> inData;
 	sf::BindingPoint<uint8_t, 0, 1> outData;
 	sf::Uniform<sf::uint, 0> count;
 	sf::Uniform<sf::integer, 1> WIDTH{ 18 };
-	sf::Uniform<sf::integer, 2> HEIGHT{ 18 };
-	   
+	sf::Uniform<sf::integer, 2> HEIGHT{ 18 }; */
+	  
 	void setup_cpu()
 	{
 		 
@@ -60,7 +58,7 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 		}
 	}
 
-	
+	/*
 	void printToConsole()
 	{
 		for (int y = 0; y < HEIGHT; ++y) {
@@ -77,5 +75,5 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 		}
 		std::cout << "\n";
 	}
-	
+	*/
 };

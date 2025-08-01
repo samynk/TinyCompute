@@ -7,6 +7,8 @@
 #include <numeric>
 #include <concepts>
 
+#include "kernel_intrinsics.hpp"
+
 namespace sf
 {
 	enum class BackendType {
@@ -104,7 +106,7 @@ namespace sf
 		}
 
 		unsigned size() const {
-			return m_pBufferData.size();
+			return m_pBufferData->size();
 		}
 
 		BufferResource<T>* getBufferData() {

@@ -9,11 +9,22 @@ set(KERNEL_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/GameOfLife.h)
 set(GLSL_OUT    ${CMAKE_CURRENT_BINARY_DIR}/GameOfLife.glsl)
 set(SPIRV_OUT   ${CMAKE_CURRENT_BINARY_DIR}/GameOfLive.spv)
 
+set(TRANSPILER_FLAGS_FILE "${CMAKE_CURRENT_BINARY_DIR}/sf_transpile_args.txt")
+file(WRITE ${TRANSPILER_FLAGS_FILE}
+  "-std=c++20\n"
+  "-I${CMAKE_CURRENT_SOURCE_DIR}/include\n"
+  "-x\n"
+  "-c++\n"
+  "-fms-compatibility\n"
+  "-fms-extensions\n"
+)
+
+get_target_property(SF_INCLUDE_DIR swizzleforge SOURCE_DIR)
 # 1) Transpile C++  →  GLSL
 add_custom_command(
     TARGET Project01
-    COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT}
-    DEPENDS sf_transpile  ${KERNEL_SRC}
+    COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${SF_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
+    DEPENDS sf_transpile  ${KERNEL_SRC} ${TRANSPILER_FLAGS_FILE}
     COMMENT "Transpiling ${KERNEL_SRC}"
     USES_TERMINAL 
 )

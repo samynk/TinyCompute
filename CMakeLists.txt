@@ -4,6 +4,7 @@ project(SwizzleForge
         DESCRIPTION "Regex-based single-source C++ → Compute-Shader framework"
         LANGUAGES CXX)
 
+
 include(FetchContent)
 include(${CMAKE_SOURCE_DIR}/util.cmake)
 
@@ -89,9 +90,8 @@ foreach(t
     vt_gen
     intrinsics_gen
     clang-tablegen-targets
-    ARMTargetParserTableGen
-    AArch64TargetParserTableGen
-    RISCVTargetParserTableGen)
+    "target_parser_gen"
+)
   if (TARGET ${t})
     set_target_properties(${t} PROPERTIES FOLDER "3rd‑party/LLVM")
   endif()

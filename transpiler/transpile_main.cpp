@@ -1,5 +1,7 @@
-#include <iostream>
-#include <vector>
+
+
+
+
 
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
@@ -11,18 +13,31 @@
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <llvm/Support/CommandLine.h>
 #include <iostream>
+#include <vector>
 
-int main(int argc, char* argv[])
-{
+#include "TranspileAction.h"
 
-	std::cout << "Tool called with " << (argc-1) << " files." << std::endl;
+using namespace clang;
+using namespace clang::tooling;
 
-    std::vector<std::string> fileList;
-    std::cout << "Arguments:" << std::endl;
-    for (int i = 1; i < argc; ++i) {
-        std::cout << "Argument " << i << ": " << argv[i] << std::endl;
-        fileList.emplace_back(argv[i]);
+static llvm::cl::OptionCategory MyToolCategory("kernel-transpiler options");
+
+static llvm::cl::opt<std::string> OutputPath(
+    "o", llvm::cl::desc("Output file"), llvm::cl::value_desc("filename"),
+    llvm::cl::Required, llvm::cl::cat(MyToolCategory));
+
+int main(int argc, const char** argv) {
+
+    auto ExpectedParser = CommonOptionsParser::create(argc, argv, MyToolCategory);
+    if (!ExpectedParser) {
+        llvm::errs() << ExpectedParser.takeError();
+        return 1;
     }
 
-    return 0;
+    ClangTool Tool(ExpectedParser->getCompilations(),
+        ExpectedParser->getSourcePathList());
+
+
+    return Tool.run(newFrontendActionFactory<TranspileAction>().get());
+
 }
