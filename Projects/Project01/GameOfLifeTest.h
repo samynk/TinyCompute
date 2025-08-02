@@ -1,12 +1,22 @@
 #pragma once
-
 //#include <iostream>
+#include <stdint.h>
+namespace sf{
+	class uvec3{
+		public:
+		uvec3(uint32_t x, uint32_t y, uint32_t z)
+		:x{x},y{y},z{z}
+		{
+		}
+		uint32_t x,y,z;
+	};
+}
 
 struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
-	/* sf::uvec3 local_size{ 18,18,1 };
+	sf::uvec3 local_size{ 18,18,1 };
 	// annotated buffers become GLSL SSBOs or UAVs
-	sf::BindingPoint<uint8_t, 0, 0> inData;
+	/*sf::BindingPoint<uint8_t, 0, 0> inData;
 	sf::BindingPoint<uint8_t, 0, 1> outData;
 	sf::Uniform<sf::uint, 0> count;
 	sf::Uniform<sf::integer, 1> WIDTH{ 18 };
@@ -17,6 +27,10 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 		 
 	}
 
+	void main(){
+	}
+	
+	/*
 	uint8_t sample(int x, int y)
 	{
 		if (x >= 0 && y >= 0 && x < WIDTH && y < HEIGHT)
@@ -28,8 +42,10 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 			return 0;
 		}
 	}
+	*/
 	 
 	// entry function – matches KernelEntry concept
+	/*
 	void operator()()
 	{
 		unsigned idx = sf::gl_GlobalInvocationID.x;
@@ -57,6 +73,7 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 			outData[idx] = (sum == 3);
 		}
 	}
+	*/
 
 	/*
 	void printToConsole()

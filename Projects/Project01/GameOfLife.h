@@ -6,7 +6,7 @@
 
 struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
-	sf::uvec3 local_size{ 18,18,1 };
+	sf::uvec3 local_size{ 16, 16, 1 };
 	// annotated buffers become GLSL SSBOs or UAVs
 	sf::BindingPoint<uint8_t, 0, 0> inData;
 	sf::BindingPoint<uint8_t, 0, 1> outData;
