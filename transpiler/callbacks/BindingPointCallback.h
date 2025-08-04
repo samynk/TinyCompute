@@ -87,8 +87,6 @@ public:
 					FD->getSourceRange().getEnd(), 0, SM, Ctx.getLangOpts());
 				SourceRange fullRange(FD->getSourceRange().getBegin(), endLoc);
 
-				// Do the replacement
-				debugFieldRange(FD, Ctx);
 				PendingEdit edit{ fullRange, glsl };
 				m_PendingEdits.emplace_back(edit);
 			}
@@ -117,28 +115,21 @@ public:
 				QualType elemType = Args[0].getAsType();
 
 				// binding is Arg 1
-				unsigned binding = 0;
+				unsigned location = 0;
 				if (Args[1].getKind() == clang::TemplateArgument::ArgKind::Integral) {
 					binding = static_cast<unsigned>(Args[1].getAsIntegral().getZExtValue());
 				}
-
-				// set is Arg 2
-				/*unsigned set = 0;
-				if (Args[2].getKind() == clang::TemplateArgument::ArgKind::Integral) {
-					set = static_cast<unsigned>(Args[2].getAsIntegral().getZExtValue());
-				}*/
 
 				bool promotedFrom8 = false;
 				auto glslElemTypeOpt = glslTypeForElement(elemType, Ctx, promotedFrom8);
 				std::string glslElemType = *glslElemTypeOpt;
 
 				std::string varName = FD->getNameAsString();
-				// Build GLSL uniform declaration (SSBO style)
 				std::string name = FD->getNameAsString();
-				std::string uniformDecl = "layout(binding = " + std::to_string(binding) +
+				std::string uniformDecl = "layout(location = " + std::to_string(location) +
 					") uniform " + glslElemType + " " + name + ";\n";
 
-				llvm::errs() << "Replacing binding with :\n" << uniformDecl << "\n.";
+				llvm::errs() << "Replacing location with :\n" << uniformDecl << "\n.";
 
 				// Replace the entire field declaration (including initializer)
 				SourceLocation endLoc = Lexer::getLocForEndOfToken(
@@ -146,7 +137,6 @@ public:
 				SourceRange fullRange(FD->getSourceRange().getBegin(), endLoc);
 
 				// Do the replacement
-				debugFieldRange(FD, Ctx);
 				PendingEdit edit{ fullRange, uniformDecl };
 				m_PendingEdits.emplace_back(edit);
 			}
@@ -160,35 +150,6 @@ public:
 		if (const FieldDecl* UF = Result.Nodes.getNodeAs<FieldDecl>("uniformField")) {
 			handleUniform(UF, Result);
 		}
-	}
-
-	void debugFieldRange(const FieldDecl* FD, ASTContext& Ctx) {
-		SourceManager& SM = Ctx.getSourceManager();
-		const LangOptions& LangOpts = Ctx.getLangOpts();
-
-		SourceLocation begin = FD->getSourceRange().getBegin();
-		SourceLocation end = FD->getSourceRange().getEnd();
-		SourceLocation realEnd = Lexer::getLocForEndOfToken(end, 0, SM, LangOpts);
-
-		auto printLoc = [&](SourceLocation L, llvm::StringRef label) {
-			if (!L.isValid()) {
-				llvm::errs() << label << " is invalid\n";
-				return;
-			}
-			clang::PresumedLoc P = SM.getPresumedLoc(L);
-			if (P.isValid()) {
-				llvm::errs() << label << ": " << P.getFilename() << "(" << P.getLine()
-					<< "," << P.getColumn() << ")\n";
-			}
-			else {
-				llvm::errs() << label << ": (couldn't get presumed loc)\n";
-			}
-			};
-
-		llvm::errs() << "FieldDecl '" << FD->getNameAsString() << "' source ranges:\n";
-		printLoc(begin, "  begin");
-		printLoc(end, "  end");
-		printLoc(realEnd, "  realEnd (after token)");
 	}
 
 private:

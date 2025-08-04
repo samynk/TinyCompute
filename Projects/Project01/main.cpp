@@ -49,7 +49,7 @@ int main(void)
 
 	kern.inData.attach(&initDataIn);
 	kern.outData.attach(&initDataOut);
-	kern.printToConsole();
+	kern._printToConsole();
 	kern.count = N;
 
 	sf::CPUBackend backend;
@@ -59,7 +59,7 @@ int main(void)
 	for (int frame = 0; frame < 4; ++frame)
 	{
 		backend.execute(kern, N);
-		kern.printToConsole();
+		kern._printToConsole();
 		// swap buffer views
 		sf::BufferResource<uint8_t>* oldFrame = kern.inData.getBufferData();
 		sf::BufferResource<uint8_t>* newFrame = kern.outData.getBufferData();

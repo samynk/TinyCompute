@@ -15,6 +15,7 @@ namespace sf{
 
 struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
+	static constexpr char fileLocation[] = "gameoflife";
 	sf::uvec3 local_size{ 18,18,1 };
 	sf::BindingPoint<uint8_t, 0, 0> inData;
 	void main(){

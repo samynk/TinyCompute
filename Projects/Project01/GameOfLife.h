@@ -16,12 +16,6 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 	sf::Uniform<sf::uint, 0> count;
 	sf::Uniform<sf::integer, 1> WIDTH{ 18 };
 	sf::Uniform<sf::integer, 2> HEIGHT{ 18 };
-	   
-
-	void setup_cpu()
-	{
-		 
-	}
 
 	uint8_t sample(int x, int y)
 	{
@@ -64,8 +58,7 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 		}
 	}
 
-	
-	void printToConsole()
+	void _printToConsole()
 	{
 		for (int y = 0; y < HEIGHT; ++y) {
 			for (int x = 0; x < WIDTH; ++x)

@@ -27,6 +27,20 @@ static llvm::cl::opt<std::string> OutputPath(
 	"o", llvm::cl::desc("Output file"), llvm::cl::value_desc("filename"),
 	llvm::cl::Required, llvm::cl::cat(MyToolCategory));
 
+class TranspileActionFactory : public clang::tooling::FrontendActionFactory {
+public:
+	explicit TranspileActionFactory(std::string baseOutput)
+		: baseOutputDir(std::move(baseOutput)) {
+	}
+
+	std::unique_ptr<clang::FrontendAction> create() override {
+		return std::make_unique<TranspileAction>(baseOutputDir);
+	}
+
+private:
+	std::string baseOutputDir;
+};
+
 
 class MyDiagnosticConsumer : public clang::TextDiagnosticPrinter {
 public:
@@ -92,6 +106,10 @@ int main(int argc, const char** argv) {
 	);
 
 	Tool.setDiagnosticConsumer(&consumer);
-	return Tool.run(newFrontendActionFactory<TranspileAction>().get());
+
+	TranspileActionFactory factory(outPath);
+	return Tool.run(&factory);
+
+	//return Tool.run(newFrontendActionFactory<TranspileAction>().get());
 
 }
