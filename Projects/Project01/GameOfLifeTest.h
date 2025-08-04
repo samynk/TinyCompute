@@ -1,5 +1,6 @@
 #pragma once
 //#include <iostream>
+#include <kernel_intrinsics.hpp>
 #include <stdint.h>
 namespace sf{
 	class uvec3{
@@ -15,20 +16,16 @@ namespace sf{
 struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
 	sf::uvec3 local_size{ 18,18,1 };
+	sf::BindingPoint<uint8_t, 0, 0> inData;
+	void main(){
+	}
+	
 	// annotated buffers become GLSL SSBOs or UAVs
 	/*sf::BindingPoint<uint8_t, 0, 0> inData;
 	sf::BindingPoint<uint8_t, 0, 1> outData;
 	sf::Uniform<sf::uint, 0> count;
 	sf::Uniform<sf::integer, 1> WIDTH{ 18 };
 	sf::Uniform<sf::integer, 2> HEIGHT{ 18 }; */
-	  
-	void setup_cpu()
-	{
-		 
-	}
-
-	void main(){
-	}
 	
 	/*
 	uint8_t sample(int x, int y)

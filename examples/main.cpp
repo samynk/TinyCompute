@@ -2,7 +2,6 @@
 #include <vector>
 #include "vec.hpp"
 #include "math/arithmetic.hpp"
-#include "annotations.hpp"
 #include "kernel_intrinsics.hpp"
 #include "ShaderBuffer.h"
 #include "computebackend.hpp"
@@ -17,6 +16,7 @@ consteval void _unroll_check() {
 const std::size_t N = 1'000;
 struct SquareKernel
 {
+	static constexpr char fileLocation[] = "square";
 	sf::uvec3 local_size{ 16,1,1 };
 	// annotated buffers become GLSL SSBOs or UAVs
 	ShaderBuffer<float, N, 0, 0> inData;
@@ -33,7 +33,7 @@ struct SquareKernel
 	}
 
 	// entry function – matches KernelEntry concept
-	void operator()()
+	void main()
 	{
 		unsigned idx = sf::gl_GlobalInvocationID.x;
 		outData[idx] = inData[idx] * inData[idx];

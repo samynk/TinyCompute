@@ -1,6 +1,6 @@
 set(SWIZZLEFORGE_SRC
     "vec.hpp"
-    "annotations.hpp"
+    
     "swizzle.hpp"
     "kernel_intrinsics.hpp"
     "computebackend.hpp"

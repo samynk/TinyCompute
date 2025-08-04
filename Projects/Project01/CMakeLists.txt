@@ -6,8 +6,8 @@ target_compile_features(Project01 PUBLIC cxx_std_20)
 
 # Source kernel and generated outputs
 set(KERNEL_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/GameOfLife.h)
-set(GLSL_OUT    ${CMAKE_CURRENT_BINARY_DIR}/GameOfLife.glsl)
-set(SPIRV_OUT   ${CMAKE_CURRENT_BINARY_DIR}/GameOfLive.spv)
+set(GLSL_OUT    ${CMAKE_CURRENT_BINARY_DIR})
+set(SPIRV_OUT   ${CMAKE_CURRENT_BINARY_DIR})
 
 set(TRANSPILER_FLAGS_FILE "${CMAKE_CURRENT_BINARY_DIR}/sf_transpile_args.txt")
 file(WRITE ${TRANSPILER_FLAGS_FILE}

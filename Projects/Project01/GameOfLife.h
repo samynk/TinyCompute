@@ -6,14 +6,18 @@
 
 struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
+	static constexpr char fileLocation[] = "gameoflife";
+
 	sf::uvec3 local_size{ 16, 16, 1 };
 	// annotated buffers become GLSL SSBOs or UAVs
 	sf::BindingPoint<uint8_t, 0, 0> inData;
-	sf::BindingPoint<uint8_t, 0, 1> outData;
+	sf::BindingPoint<uint8_t, 1, 0> outData;
+
 	sf::Uniform<sf::uint, 0> count;
 	sf::Uniform<sf::integer, 1> WIDTH{ 18 };
 	sf::Uniform<sf::integer, 2> HEIGHT{ 18 };
 	   
+
 	void setup_cpu()
 	{
 		 
@@ -32,7 +36,7 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 	}
 	 
 	// entry function – matches KernelEntry concept
-	void operator()()
+	void main()
 	{
 		unsigned idx = sf::gl_GlobalInvocationID.x;
 		int x = idx % WIDTH;

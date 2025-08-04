@@ -1,6 +1,6 @@
 add_executable(sf_transpile
     transpile_main.cpp
-  "KernelValidator.h" "TranspileAction.h" "matchers/LocalSizeCallback.h"  "matchers/KernelLocatorCallback.h" "callbacks/VarCallback.h")
+  "KernelValidator.h" "TranspileAction.h" "matchers/LocalSizeCallback.h"  "matchers/KernelLocatorCallback.h" "callbacks/VarCallback.h" "callbacks/BindingPointCallback.h" "PendingEdit.h")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 target_compile_features(sf_transpile PUBLIC cxx_std_20)
 

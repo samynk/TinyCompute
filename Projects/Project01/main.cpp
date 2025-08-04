@@ -2,7 +2,6 @@
 #include <vector>
 #include "vec.hpp"
 #include "math/arithmetic.hpp"
-#include "annotations.hpp"
 #include "kernel_intrinsics.hpp"
 #include "ShaderBuffer.h"
 #include "computebackend.hpp"

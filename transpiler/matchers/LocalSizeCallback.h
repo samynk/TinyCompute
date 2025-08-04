@@ -3,12 +3,15 @@
 #include <clang/Rewrite/Core/Rewriter.h>
 #include <clang/lex/Lexer.h>
 
+#include <vector>
+#include "../PendingEdit.h"
+
 
 using namespace clang;
 using namespace clang::ast_matchers;
 class LocalSizeCallback : public MatchFinder::MatchCallback {
 public:
-    LocalSizeCallback(clang::Rewriter& R) : Rewrite(R) {}
+    LocalSizeCallback(std::vector<PendingEdit>& edits) : m_PendingEdits(edits) {}
 
     std::optional<unsigned> extractUInt(const Expr* E, ASTContext& Ctx) {
         if (!E) return std::nullopt;
@@ -73,9 +76,9 @@ public:
         SourceLocation endLoc = Lexer::getLocForEndOfToken(
             FD->getSourceRange().getEnd(), 0, SM, Ctx->getLangOpts());
         SourceRange fullRange(FD->getSourceRange().getBegin(), endLoc);
-        Rewrite.ReplaceText(fullRange, replacement);
+        m_PendingEdits.emplace_back( PendingEdit{fullRange,replacement} );
     }
 
 private:
-    Rewriter& Rewrite;
+    std::vector<PendingEdit>& m_PendingEdits;
 };
