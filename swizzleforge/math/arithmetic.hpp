@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vec.hpp"
+#include "../vec.hpp"
 
 namespace sf {
 	// numeric operators

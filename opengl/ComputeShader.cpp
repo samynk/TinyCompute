@@ -4,7 +4,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-
 #include <glm/gtc/type_ptr.hpp>
 
 ComputeShader::ComputeShader(const std::string& fileLocation) :m_FileLocation{ fileLocation }
@@ -127,6 +126,8 @@ void ComputeShader::compile()
 		glDetachShader(m_ComputeProgramID, m_ShaderID);
 		glDeleteShader(m_ShaderID);
 		m_ShaderID = 0;
+
+		std::cout << "Generated programID " << m_ComputeProgramID << "\n";
 	}
 }
 

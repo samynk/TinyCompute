@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.28)
 project(SwizzleForge
         VERSION 0.1.0
         DESCRIPTION "Regex-based single-source C++ → Compute-Shader framework"
@@ -66,8 +66,10 @@ FetchContent_MakeAvailable(stb)
 # Sub-directories
 # ─────────────────────────────────────────────────────────────
 add_subdirectory(swizzleforge)
-add_subdirectory(transpiler)
 add_subdirectory(opengl)
+
+add_subdirectory(transpiler)
+
 
 if (SWIZZLEFORGE_BUILD_TESTS)
     enable_testing()
@@ -76,8 +78,7 @@ endif()
 
 if (SWIZZLEFORGE_BUILD_EXAMPLES)
     add_subdirectory(examples)
-    add_subdirectory(Project00)
-    set_target_properties(Project00 PROPERTIES FOLDER "03‑Examples")
+    
     add_subdirectory(Projects/Project01)
     set_target_properties(Project01 PROPERTIES FOLDER "03‑Examples")
 endif()

@@ -1,20 +1,40 @@
-add_library(ComputeLib STATIC 
-	"SurfaceRenderer.h" "SurfaceRenderer.cpp"  
-	"ComputeShader.h" "ComputeShader.cpp"
-	"GLImage.h" "GLImage.cpp"
-	"ComputeWindow.h"  
-	"ShaderBuffer.h"   
-	"Compute.h" "ImageBuffer2D.h" "ImageFormat.h")
 find_package(OpenGL REQUIRED)
 
-target_include_directories(ComputeLib PUBLIC 
+add_library(ComputeLibOpenGL STATIC
+    "SurfaceRenderer.h"  
+	"ComputeShader.h" 
+	"GLImage.h" 
+	"ComputeWindow.h"  
+	"ShaderBuffer.h"   
+	"Compute.h" 
+	"ImageBuffer2D.h" 
+	"ImageFormat.h"
+	"stb_image.h"
+	"SurfaceRenderer.cpp"  
+	"ComputeShader.cpp"
+	"GLImage.cpp"
+ "OpenGLBackend.h")
+
+target_include_directories(ComputeLibOpenGL PUBLIC 
 	${CMAKE_CURRENT_SOURCE_DIR}
     ${OPENGL_INCLUDE_DIRS} 
-    ${glew_SOURCE_DIR}/include 
     ${stb_SOURCE_DIR}
+	${glew_SOURCE_DIR}/include 
 )
 
-target_link_libraries(ComputeLib PUBLIC OpenGL::GL glfw glm libglew_static)
+target_link_libraries(
+	ComputeLibOpenGL 
+	PRIVATE 
+		OpenGL::GL 
+		
+	PUBLIC
+		
+		glfw 
+		libglew_static 
+		glm
+	INTERFACE
+		swizzleforge
+) 
 
- set_target_properties(ComputeLib PROPERTIES
+ set_target_properties(ComputeLibOpenGL PROPERTIES
         FOLDER "01-Core" )

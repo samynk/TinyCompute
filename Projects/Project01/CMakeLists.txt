@@ -1,6 +1,6 @@
 ﻿add_executable(Project01
     main.cpp
- "GameOfLife.h")
+ "GameOfLife.h" "GameOfLifeWindow.h" "GameOfLifeWindow.cpp")
 
 target_compile_features(Project01 PUBLIC cxx_std_20)
 
@@ -22,7 +22,7 @@ file(WRITE ${TRANSPILER_FLAGS_FILE}
 get_target_property(SF_INCLUDE_DIR swizzleforge SOURCE_DIR)
 # 1) Transpile C++  →  GLSL
 add_custom_command(
-    TARGET Project01
+    TARGET Project01 
     COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${SF_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
     DEPENDS sf_transpile  ${KERNEL_SRC} ${TRANSPILER_FLAGS_FILE}
     COMMENT "Transpiling ${KERNEL_SRC}"
@@ -30,14 +30,13 @@ add_custom_command(
 )
 
 target_link_libraries(Project01
-    PRIVATE
-        swizzleforge
-        ComputeLib
+PUBLIC
+    ComputeLibOpenGL
 )
 
 # Put demo executable next to shaders / assets
-set_target_properties(Project01 PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
+#set_target_properties(Project01 PROPERTIES
+#    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+#)
 
-add_dependencies(Project01 sf_transpile ComputeLib) 
+#add_dependencies(Project01 sf_transpile ComputeLibOpenGL) 

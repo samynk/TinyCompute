@@ -171,6 +171,7 @@ public:
 				std::filesystem::create_directories(path.parent_path());
 
 				std::ofstream ofs(path);
+				ofs << "#version 430\n";
 				ofs << computeShader;
 				ofs.close();
 			}

@@ -9,6 +9,9 @@
 
 #include "kernel_intrinsics.hpp"
 
+#include <unordered_map>
+
+
 namespace sf
 {
 	enum class BackendType {
@@ -91,4 +94,6 @@ namespace sf
 				});
 		}
 	};
+
+	
 }

@@ -3,7 +3,6 @@
 #include "vec.hpp"
 #include "math/arithmetic.hpp"
 #include "kernel_intrinsics.hpp"
-#include "ShaderBuffer.h"
 #include "computebackend.hpp"
 
 consteval void _unroll_check() {
@@ -19,8 +18,8 @@ struct SquareKernel
 	static constexpr char fileLocation[] = "square";
 	sf::uvec3 local_size{ 16,1,1 };
 	// annotated buffers become GLSL SSBOs or UAVs
-	ShaderBuffer<float, N, 0, 0> inData;
-	ShaderBuffer<float, N, 0, 1> outData;
+	sf::BindingPoint<float,1> inData;
+	sf::BindingPoint<float,0> outData;
 
 	std::size_t count = 0;
 

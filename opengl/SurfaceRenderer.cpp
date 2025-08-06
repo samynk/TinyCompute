@@ -5,11 +5,9 @@
 #include <sstream>
 
 
-SurfaceRenderer::SurfaceRenderer(GLuint bindingId, GLuint w, GLuint h, const std::string& vertexShader, const std::string fragmentShader)
+SurfaceRenderer::SurfaceRenderer(GLuint bindingId, GLuint w, GLuint h)
 	:
-	m_VertexShaderFile{vertexShader},
-	m_FragmentShaderFile{fragmentShader},
-	m_FullScreenImage{bindingId,w,h,GL_READ_WRITE},
+	m_FullScreenImage{bindingId,w,h,GL_READ_ONLY },
 	m_ProgramID{ 0 },
 	m_VertexArrayObject{ 0 },
 	m_VertexBufferObject{ 0 },
@@ -33,7 +31,7 @@ SurfaceRenderer::~SurfaceRenderer()
 
 void SurfaceRenderer::init()
 {
-	createShaderProgram(m_VertexShaderFile, m_FragmentShaderFile);
+	createShaderProgram();
 	m_FullScreenImage.init();
 	setupQuad();
 	
@@ -49,10 +47,10 @@ void SurfaceRenderer::bindAsCompute(GLuint bindingSlot) const
 	m_FullScreenImage.bindAsCompute(bindingSlot);
 }
 
-void SurfaceRenderer::createShaderProgram(const std::string& vertexShader, const std::string fragmentShader)
+void SurfaceRenderer::createShaderProgram()
 {
-	GLuint vertexShaderID = compileShader(loadShaderSource(vertexShader), GL_VERTEX_SHADER);
-	GLuint fragmentShaderID = compileShader(loadShaderSource(fragmentShader), GL_FRAGMENT_SHADER);
+	GLuint vertexShaderID = compileShader(gVertexShader, GL_VERTEX_SHADER);
+	GLuint fragmentShaderID = compileShader(gFragmentShader, GL_FRAGMENT_SHADER);
 
 	// Link shaders into a program
 	m_ProgramID = glCreateProgram();
@@ -129,17 +127,4 @@ GLuint SurfaceRenderer::compileShader(const std::string& shaderSource, GLenum sh
 	}
 
 	return shaderID;
-}
-
-std::string SurfaceRenderer::loadShaderSource(const std::string& shaderFile) const
-{
-	std::ifstream inputFile(shaderFile);
-
-	if (!inputFile.is_open()) {
-		throw std::runtime_error("Error: Could not open the shader file " + shaderFile);
-	}
-	// Read the entire file into a string
-	std::stringstream buffer;
-	buffer << inputFile.rdbuf();
-	return buffer.str();
 }

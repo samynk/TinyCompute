@@ -17,9 +17,8 @@ add_executable(swizzleforge_tests
 target_compile_features(swizzleforge_tests PUBLIC cxx_std_20)
 
 target_link_libraries(swizzleforge_tests
-    PRIVATE
         gtest_main
-        swizzleforge
+        swizzleforge   
 )
 
 add_test(NAME SwizzleForgeUnitTests COMMAND swizzleforge_tests)

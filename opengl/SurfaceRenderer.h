@@ -3,11 +3,40 @@
 #include <string>
 #include "GLImage.h"
 
+const std::string gFragmentShader =
+R"(
+#version 430 core
+out vec4 FragColor;
+in vec2 TexCoord;
+
+uniform sampler2D screenTexture;
+
+void main()
+{
+    FragColor = texture(screenTexture, TexCoord);
+}
+)";
+
+const std::string gVertexShader =
+R"(
+#version 430 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoord;
+
+out vec2 TexCoord;
+
+void main()
+{
+    TexCoord = aTexCoord;
+    gl_Position = vec4(aPos, 0.0, 1.0);
+}
+)";
+
 class SurfaceRenderer
 {
 
 public:
-	SurfaceRenderer(GLuint bindingId, GLuint width, GLuint height, const std::string& vertexShader, const std::string fragmentShader);
+	SurfaceRenderer(GLuint bindingId, GLuint width, GLuint height);
     ~SurfaceRenderer();
 
     // not meant to be copied or moved
@@ -33,12 +62,8 @@ public:
 
 private:
     GLuint compileShader(const std::string& shaderSource, GLenum shaderType) const;
-    std::string loadShaderSource(const std::string& shaderFile) const;
-    void createShaderProgram(const std::string& vertexShader, const std::string fragmentShader);
+    void createShaderProgram();
     void setupQuad();
-
-    std::string m_VertexShaderFile;
-    std::string m_FragmentShaderFile;
     GLint m_screenTextureLoc{ 0 };
 
     float quadVertices[24] = {
@@ -51,11 +76,13 @@ private:
          1.0f, -1.0f,  1.0f, 1.0f, // Bottom-right
          1.0f,  1.0f,  1.0f, 0.0f  // Top-right
     };
+
     GLuint m_Width;
     GLuint m_Height;
 
     // Automatically released.
     GLImage m_FullScreenImage;
+
     // To release in destructor.
     GLuint m_ProgramID;
     GLuint m_VertexArrayObject;

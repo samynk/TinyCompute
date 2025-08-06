@@ -64,6 +64,11 @@ namespace sf
 	class BufferResource
 	{
 	public:
+		BufferResource() 
+		{
+			// no size
+		}
+
 		BufferResource(unsigned size)
 		{
 			m_Data.resize(size);

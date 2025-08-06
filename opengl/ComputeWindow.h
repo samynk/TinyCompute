@@ -61,7 +61,7 @@ ComputeWindow<C>::ComputeWindow(GLuint width, GLuint height, const std::string& 
 	:m_Width{ width },
 	m_Height{ height },
 	m_Title{ title },
-	m_SurfaceRenderer{ 0, width, height,"shaders/fullscreen_quad.vert","shaders/fullscreen_quad.frag" },
+	m_SurfaceRenderer{ 0, width, height },
 	m_pWindow{ nullptr },
 	m_Compute{ width, height},
 	m_VSync{true}
@@ -175,5 +175,3 @@ template<HasCompute C>
 bool ComputeWindow<C>::isMovingRight() {
 	return glfwGetKey(m_pWindow, GLFW_KEY_RIGHT) == GLFW_PRESS;
 }
-
-
