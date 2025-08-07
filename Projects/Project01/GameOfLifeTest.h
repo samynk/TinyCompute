@@ -1,6 +1,5 @@
 #pragma once
 //#include <iostream>
-#include <kernel_intrinsics.hpp>
 #include <stdint.h>
 namespace sf{
 	class uvec3{
@@ -11,14 +10,25 @@ namespace sf{
 		}
 		uint32_t x,y,z;
 	};
+	
+	inline thread_local sf::uvec3 gl_GlobalInvocationID(0, 0, 0);
+}
+
+template<typename T, unsigned B>
+class Test
+{
+	T x;
+	unsigned B;
 }
 
 struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
 	static constexpr char fileLocation[] = "gameoflife";
 	sf::uvec3 local_size{ 18,18,1 };
-	sf::BindingPoint<uint8_t, 0, 0> inData;
+	Test<float,3> t;
 	void main(){
+		//unsigned idx = sf::gl_GlobalInvocationID.x;
+		unsigned idx = local_size.x;
 	}
 	
 	// annotated buffers become GLSL SSBOs or UAVs

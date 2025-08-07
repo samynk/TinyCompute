@@ -3,6 +3,9 @@
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/ast/ASTConsumer.h>
 
+#include "llvm/Support/Program.h"
+#include "llvm/Support/InitLLVM.h"
+#include <regex>
 
 #include <clang/astmatchers/ASTMatchers.h>
 #include <clang/Rewrite/Core/Rewriter.h>
@@ -14,15 +17,13 @@
 #include "matchers/LocalSizeCallback.h"
 #include "matchers/KernelLocatorCallback.h"
 
-#include <iostream>
-#include <filesystem>
-#include <fstream>
+
 #include <vector>
 
 
 #include "PendingEdit.h"
-
-
+#include "KernelStruct.h"
+#include "KernelRewriter.h"
 
 class TranspileAction : public clang::ASTFrontendAction {
 public:
@@ -35,16 +36,8 @@ public:
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& CI, clang::StringRef) override {
 		llvm::errs() << "Creating AST customer.\n";
 		RewriterObj.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
-		// Phase 1: validate kernel – you would scope this to the annotated struct / function body.
+		m_pASTContext = &CI.getASTContext();
 		Validator = std::make_unique<KernelValidator>(CI.getASTContext());
-
-		// Phase 2: setup matchers
-		// Match a var named local_size of type vec3/uvec3 with three-element init list.
-		auto localSizeMatcher = fieldDecl(
-			hasName("local_size")
-			//,hasInitializer(initListExpr(hasSize(3)))
-			//,hasType(qualType(hasDeclaration(recordDecl(matchesName("^[ui]?vec3$")))))
-		).bind("localSizeVar");
 
 		auto kernelStructMatcher = cxxRecordDecl(
 			isDefinition(),
@@ -56,33 +49,21 @@ public:
 					isConstexpr()
 				).bind("fileLocation")
 			),
+			hasDescendant(
+				fieldDecl(
+					hasName("local_size")
+				).bind("localSizeVar")
+			),
 			hasMethod(
 				cxxMethodDecl(hasName("main"))
 			)
 		).bind("kernelStruct");
 
-		auto bindingPointMatcher = fieldDecl(
-			hasType(qualType(hasDeclaration(
-				classTemplateSpecializationDecl(hasName("BindingPoint"))
-			)))
-		).bind("bindingField");
 
-		auto uniformMatcher = fieldDecl(
-			hasType(qualType(hasDeclaration(
-				classTemplateSpecializationDecl(hasName("Uniform"))
-			)))
-		).bind("uniformField");
-
-		/*auto cpuMethodMatcher = cxxMethodDecl(
-			matchesName("::_.*")
-		).bind("cpuMethod");*/
-
-		Finder.addMatcher(localSizeMatcher, &Callback);
 		Finder.addMatcher(kernelStructMatcher, &KernelLocator);
-		Finder.addMatcher(bindingPointMatcher, &bpCallback);
+		/*Finder.addMatcher(bindingPointMatcher, &bpCallback);
 		Finder.addMatcher(uniformMatcher, &bpCallback);
-		//Finder.addMatcher(cpuMethodMatcher, &cpuMethodCallback);
-
+		Finder.addMatcher(unsignedMatcher, &bpCallback);*/
 		return Finder.newASTConsumer();
 	}
 
@@ -116,80 +97,70 @@ public:
 		return {};
 	}
 
+	void validateKernel(KernelStruct& kernel)
+	{
+		const CXXRecordDecl* kernelStruct = kernel.getKernelRecordDecl();
+		Validator->TraverseDecl(const_cast<CXXRecordDecl*>(kernelStruct));
+	}
+
 	void EndSourceFileAction() override {
-		if (!FoundKernel) {
+		auto& foundKernels = KernelLocator.getKernels();
+		if (foundKernels.size() == 0) {
 			llvm::errs() << "No kernel struct annotated; skipping.\n";
 			return;
 		}
+		llvm::errs() << "Found #kernels:" << foundKernels.size() << "\n";
 
-		// Now validate *only inside* the kernel definition.
-		// If your validator is a RecursiveASTVisitor, traverse the record itself:
+		// validate all the kernels.
+		for (KernelStruct& ks : foundKernels)
+		{
+			validateKernel(ks);
+		}
 
-		CXXRecordDecl* kernelStruct = const_cast<CXXRecordDecl*>(FoundKernel);
-		Validator->TraverseDecl(kernelStruct);
-
-
-		if (!Validator->isValid()) {
+		if (!Validator->isValid()) 
+		{
 			llvm::errs() << "Validation failed inside kernel; aborting transpilation.\n";
 			return;
 		}
+		else {
+			llvm::errs() << "All kernels are valid.\n";
+		}
 
-		if (auto fileLocVar = getFileLocationDeclaration(kernelStruct))
+		SourceManager& sourceManager = RewriterObj.getSourceMgr();
+		const LangOptions& languageOptions = RewriterObj.getLangOpts();
+
+		std::vector<PendingEdit>& pendingEdits = KernelLocator.getPendingEdits();
+		auto rewriter = std::make_unique<KernelRewriter>(m_pASTContext,pendingEdits);
+		for (KernelStruct& ks : foundKernels) 
 		{
-			if (auto fileLoc = getFileLocation(fileLocVar.value()))
-			{
-				// Phase 2: apply rewrites
-				Finder.matchAST(getCompilerInstance().getASTContext());
-				PendingEdit removeFileLoc{ fileLocVar.value()->getSourceRange(),"" }; // replace with nothing.
-				pendingEdits.emplace_back(removeFileLoc);
-				// Emit transformed source
-				std::sort(pendingEdits.begin(), pendingEdits.end(), [](auto& a, auto& b) {
-					return a.range.getBegin() < b.range.getBegin();
-					});
-				for (auto& e : pendingEdits)
-				{
-					RewriterObj.ReplaceText(e.range, e.replacement);
-				}
+			const CXXRecordDecl* kernelStruct = ks.getKernelRecordDecl();
+			rewriter->TraverseDecl(const_cast<CXXRecordDecl*>(kernelStruct));
+		}
+		llvm::errs() << "All kernels have been rewritten\n";
 
+		// apply all the edits.
+		
+		std::sort(pendingEdits.begin(), pendingEdits.end(), [](auto& a, auto& b) {
+			return a.range.getBegin() < b.range.getBegin();
+			});
+		for (auto& e : pendingEdits)
+		{
+			RewriterObj.ReplaceText(e.range, e.replacement);
+		}
 
-				SourceManager& sourceManager = RewriterObj.getSourceMgr();
-				const LangOptions& languageOptions = RewriterObj.getLangOpts();
-
-				SourceRange range = kernelStruct->getBraceRange();
-				SourceLocation contentStart = clang::Lexer::getLocForEndOfToken(
-					sourceManager.getExpansionLoc(range.getBegin()), 0, sourceManager, languageOptions);
-
-				SourceLocation contentEnd = sourceManager.getExpansionLoc(range.getEnd().getLocWithOffset(-1));
-
-				std::string computeShader = RewriterObj.getRewrittenText(SourceRange{ contentStart,contentEnd });
-				llvm::outs() << computeShader;
-
-
-				std::filesystem::path path = m_OutputDir;
-				std::filesystem::path glslFile = fileLoc.value().replace_extension("glsl");
-				path /= glslFile;
-				std::filesystem::create_directories(path.parent_path());
-
-				std::ofstream ofs(path);
-				ofs << "#version 430\n";
-				ofs << computeShader;
-				ofs.close();
-			}
+		llvm::errs() << "Applied all the edits\n";
+		for (KernelStruct& ks : foundKernels)
+		{
+			ks.exportComputeShader(RewriterObj, m_OutputDir);
 		}
 	}
-
 private:
 	std::string m_OutputDir;
 
 	clang::Rewriter RewriterObj;
+	clang::ASTContext* m_pASTContext;
 	clang::ast_matchers::MatchFinder Finder;
 
 	std::unique_ptr<KernelValidator> Validator;
-	std::vector<PendingEdit> pendingEdits;
-
-	LocalSizeCallback Callback{ pendingEdits };
-	BindingPointCallback bpCallback{ pendingEdits };
-	CpuMethodCallback cpuMethodCallback{ pendingEdits };
-	const CXXRecordDecl* FoundKernel = nullptr;
-	KernelLocatorCallback KernelLocator{ FoundKernel,pendingEdits };
+	KernelLocatorCallback KernelLocator{ };
 };

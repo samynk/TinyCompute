@@ -6,6 +6,7 @@
 class ComputeShader
 {
 public:
+	ComputeShader() {}
 	ComputeShader(const std::string& fileLocation);
 	~ComputeShader();
 	// Delete copy constructor and copy assignment to prevent copying

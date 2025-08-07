@@ -38,6 +38,6 @@ public:
 private:
 	GameOfLifeKernel m_GameOfLife;
 
-	sf::BufferResource<uint8_t> m_initDataIn;
-	sf::BufferResource<uint8_t> m_initDataOut;
+	sf::BufferResource<sf::uint> m_initDataIn;
+	sf::BufferResource<sf::uint> m_initDataOut;
 };

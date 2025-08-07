@@ -1,5 +1,5 @@
 ﻿#pragma once
-
+#include <limits>
 // ──────────────────────────────────────────────────────────────
 // 1.  Kernel entry‑point concept
 // ──────────────────────────────────────────────────────────────
@@ -87,8 +87,22 @@ namespace sf
 		unsigned size() const {
 			return m_Data.size();
 		}
+
+		T* data()  {
+			return m_Data.data();
+		}
+
+
+		unsigned int getSSBO_ID() const {
+			return m_SSBO_ID;
+		}
+
+		void setSSBO_ID(unsigned int ssbo_id) {
+			m_SSBO_ID = ssbo_id;
+		}
 	private:
 		std::vector<T> m_Data;
+		unsigned int m_SSBO_ID{ std::numeric_limits<unsigned int>::max() };
 	};
 
 	template<typename T, unsigned Binding, unsigned Set = 0 >
@@ -119,7 +133,7 @@ namespace sf
 			return m_pBufferData->size();
 		}
 
-		BufferResource<T>* getBufferData() {
+		BufferResource<T>* getBufferData() const{
 			return m_pBufferData;
 		}
 

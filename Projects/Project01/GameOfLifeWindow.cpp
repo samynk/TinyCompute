@@ -12,15 +12,20 @@ GameOfLifeWindow::~GameOfLifeWindow()
 
 void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 {
+
 	sf::uint w = m_GameOfLife.WIDTH;
 	sf::uint h = m_GameOfLife.HEIGHT;
 	sf::uint N = w * h;
-	m_initDataIn = sf::BufferResource<uint8_t>{ N };
-	m_initDataOut = sf::BufferResource<uint8_t>{ N };
-	for (int y = 0; y < h; ++y) {
-		for (int x = 0; x < w; ++x) {
-			std::size_t idx = y * w + x;
-			char c = pattern[y * (w + 1) + x];
+	m_initDataIn = sf::BufferResource<sf::uint>{ N };
+	m_initDataOut = sf::BufferResource<sf::uint>{ N };
+	sf::uint offsetX = 7;
+	sf::uint offsetY = 7;
+	sf::uint pw = 18;
+	sf::uint ph = 18;
+	for (int y = 0; y < ph; ++y) {
+		for (int x = 0; x < pw; ++x) {
+			std::size_t idx = (y+offsetY) * w + x+offsetX;
+			char c = pattern[y * (pw + 1) + x];
 			m_initDataIn[idx] = (c == '1') ? 1 : 0;
 			m_initDataOut[idx] = m_initDataIn[idx];
 		}
@@ -32,23 +37,35 @@ void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 	m_GameOfLife.count = N;
 
 	GPUBackend gpuBackend;
-	gpuBackend.execute(m_GameOfLife,m_GameOfLife.count);
+	gpuBackend.uploadBuffer(m_initDataIn);
+	gpuBackend.uploadBuffer(m_initDataOut);
+
+	m_GameOfLife._printToConsole();
+	
+	gpuBackend.useKernel(m_GameOfLife, m_GameOfLife.count);
+	gpuBackend.bindBuffer(m_GameOfLife.inData);
+	gpuBackend.bindBuffer(m_GameOfLife.outData);
+	gpuBackend.bindUniform(m_GameOfLife.WIDTH);
+	gpuBackend.bindUniform(m_GameOfLife.HEIGHT);
+	gpuBackend.execute(m_GameOfLife, m_GameOfLife.count);
+
+	gpuBackend.downloadBuffer(m_initDataOut);
+	m_GameOfLife._printToConsole();
 }
 
 void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
 {
 	sf::CPUBackend backend;
 	// actually do the binding. (corresponds to glBindBufferBase, no-op on cpu, already bound in memory).
-	// backend.bindBuffer(kern.inData);
-	// backend.bindBuffer(kern.outData);
-	for (int frame = 0; frame < 4; ++frame)
-	{
-		backend.execute(m_GameOfLife, m_GameOfLife.count);
-		m_GameOfLife._printToConsole();
-		// swap buffer views
-		sf::BufferResource<uint8_t>* oldFrame = m_GameOfLife.inData.getBufferData();
-		sf::BufferResource<uint8_t>* newFrame = m_GameOfLife.outData.getBufferData();
-		m_GameOfLife.inData.attach(newFrame);
-		m_GameOfLife.outData.attach(oldFrame);
-	}
+	//backend.bindBuffer(kern.inData);
+	//backend.bindBuffer(kern.outData);
+
+	//backend.execute(m_GameOfLife, m_GameOfLife.count);
+	//m_GameOfLife._printToConsole();
+	// swap buffer views
+	/*sf::BufferResource<sf::uint>* oldFrame = m_GameOfLife.inData.getBufferData();
+	sf::BufferResource<sf::uint>* newFrame = m_GameOfLife.outData.getBufferData();
+	m_GameOfLife.inData.attach(newFrame);
+	m_GameOfLife.outData.attach(oldFrame);*/
+
 }

@@ -39,15 +39,35 @@ namespace sf
 		}
 
 		template<typename BufferType>
-		void uploadBuffer(std::span<BufferType> data, unsigned Set, unsigned BindId)
+		void uploadBuffer(BufferResource<BufferType>& resource )
 		{
-			static_cast<Derived*>(this)->uploadImpl(data, Set, BindId);
+			static_cast<Derived*>(this)->uploadImpl(resource);
 		}
 
 		template<typename BufferType>
-		void downloadBuffer(std::span<BufferType> data, unsigned Set, unsigned BindId)
+		void downloadBuffer(BufferResource<BufferType>& resource)
 		{
-			static_cast<Derived*>(this)->downloadImpl(data, Set, BindId);
+			static_cast<Derived*>(this)->downloadImpl(resource);
+		}
+
+		template<typename T, unsigned Binding, unsigned Set>
+		void bindBuffer(const sf::BindingPoint<T, Binding, Set>& buffer)
+		{
+			static_cast<Derived*>(this)->bindBuffer(buffer);
+		}
+
+		template<typename T, unsigned Location>
+		void bindUniform(const sf::Uniform<T, Location>& uniform)
+		{
+			static_cast<Derived*>(this)->bindUnfirom(uniform);
+		}
+
+		template<KernelEntry K>
+		void useKernel(K& k)
+		{
+			static_assert(HasLocalSize<K>,
+				"Kernel must have a 'sf::uvec3 local_size' member.");
+			static_cast<Derived*>(this)->useKernel(k);
 		}
 
 		template<KernelEntry K>
@@ -56,6 +76,7 @@ namespace sf
 			static_assert(HasLocalSize<K>,
 				"Kernel must have a 'sf::uvec3 local_size' member.");
 			static_cast<Derived*>(this)->executeImpl(k, totalWork);
+		
 		}
 	private:
 		BackendType m_Backend;
@@ -70,13 +91,31 @@ namespace sf
 		}
 
 		template<typename BufferType>
-		void uploadBuffer(std::span<BufferType> data, unsigned Set, unsigned BindId)
+		void uploadBuffer(BufferResource<BufferType>& buffer)
 		{
 			// no op
 		}
 
 		template<typename BufferType>
-		void downloadBuffer(std::span<BufferType> data, unsigned Set, unsigned BindId)
+		void downloadBuffer(BufferResource<BufferType>& buffer)
+		{
+			// no op
+		}
+
+		template<typename T, unsigned Binding, unsigned Set>
+		void bindBuffer(const sf::BindingPoint<T, Binding, Set>& buffer)
+		{
+			// no op
+		}
+
+		template<typename T, unsigned Location>
+		void bindUniform(const sf::Uniform<T, Location>& uniform)
+		{
+			// no op
+		}
+
+		template<KernelEntry K>
+		void useKernel(K& k)
 		{
 			// no op
 		}
