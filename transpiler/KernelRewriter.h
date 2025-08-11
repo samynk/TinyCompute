@@ -20,16 +20,30 @@ public:
 	bool VisitDeclRefExpr(clang::DeclRefExpr* pRef);
 	bool VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCast);
 
-	bool TraverseTemplateArgument(const clang::TemplateArgument pTemplateArguments)
-	{
-		return false;
-	}
-	bool VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl* pDecl)
-	{
-		return false;
+	static void focusedDump(const clang::Stmt* S, clang::ASTContext& Ctx);
+	
+	bool VisitCXXConstructExpr(clang::CXXConstructExpr* pConstructorCall);
+	bool VisitCXXFunctionalCastExpr(clang::CXXFunctionalCastExpr* pCastEpr);
+
+	clang::SourceLocation afterLSquare(const clang::Expr* Base);
+    clang::SourceLocation afterRSquare(const clang::Expr* Index);
+
+	bool VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr* E);
+
+	bool TraverseFieldDecl(clang::FieldDecl* fieldDec) {
+		return this->WalkUpFromFieldDecl(fieldDec);
 	}
 private:
-	std::optional<std::string> glslTypeForElement(clang::QualType elemType);
+	static void dumpDyn(const clang::Expr* E, llvm::StringRef label) {
+		if (!E) { llvm::errs() << label << ": <null>\n"; return; }
+		std::string stmClassName = E->getStmtClassName();
+		llvm::errs() << label << ": " << stmClassName
+			<< "  type=" << E->getType().getAsString() << "\n";
+	}
+
+	static std::optional<std::string> glslTypeForVecBase(clang::QualType qt);
+	static std::optional<std::string> glslTypeForElement(clang::QualType elemType);
+	void rewriteVecCtorType(const clang::Expr* E);
 	GLSLDataType getGLSLDataType(clang::QualType elemType);
 	std::string getGLSLDataTypeAsString(GLSLDataType);
 	unsigned int getGSLDataTypeRank(GLSLDataType);

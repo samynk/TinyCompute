@@ -1,23 +1,45 @@
 #pragma once
+//#include <iostream>
+#include <stdint.h>
+namespace sf{
+	class uvec3{
+		public:
+		uvec3(uint32_t x, uint32_t y, uint32_t z)
+		:x{x},y{y},z{z}
+		{
+		}
+		uint32_t x,y,z;
+	};
+	
+	inline thread_local sf::uvec3 gl_GlobalInvocationID(0, 0, 0);
+}
 
-#include <iostream>
-#include "vec.hpp"
-#include "computebackend.hpp"
+template<typename T, unsigned B>
+class Test
+{
+	T x;
+	unsigned B;
+}
 
 struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
 	static constexpr char fileLocation[] = "gameoflife";
-
-	sf::uvec3 local_size{ 16, 1, 1 };
+	sf::uvec3 local_size{ 18,18,1 };
+	Test<float,3> t;
+	void main(){
+		//unsigned idx = sf::gl_GlobalInvocationID.x;
+		unsigned idx = local_size.x;
+	}
+	
 	// annotated buffers become GLSL SSBOs or UAVs
-	sf::BindingPoint<sf::uint, 0, 0> inData;
-	sf::BindingPoint<sf::uint, 1, 0> outData;
-
-	sf::Uniform<sf::integer, 1> WIDTH{ 32 };
-	sf::Uniform<sf::integer, 2> HEIGHT{ 32 };
-	sf::Uniform<sf::uvec3, 0> globalWorkSize{ sf::uvec3{WIDTH * HEIGHT,1,1} };
-
-	sf::uint sampleGrid(int x, int y)
+	/*sf::BindingPoint<uint8_t, 0, 0> inData;
+	sf::BindingPoint<uint8_t, 0, 1> outData;
+	sf::Uniform<sf::uint, 0> count;
+	sf::Uniform<sf::integer, 1> WIDTH{ 18 };
+	sf::Uniform<sf::integer, 2> HEIGHT{ 18 }; */
+	
+	/*
+	uint8_t sample(int x, int y)
 	{
 		if (x >= 0 && y >= 0 && x < WIDTH && y < HEIGHT)
 		{
@@ -28,22 +50,26 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 			return 0;
 		}
 	}
+	*/
 	 
-	// entry function matches KernelEntry concept
-	void main()
+	// entry function – matches KernelEntry concept
+	/*
+	void operator()()
 	{
 		unsigned idx = sf::gl_GlobalInvocationID.x;
 		int x = idx % WIDTH;
 		int y = idx / HEIGHT;
 		   
 		//sf::vec3* pVec = new sf::vec3{ 1,2,3 };
+
+ 
 		bool alive = inData[idx];
 		int sum = -alive;
 		for (int ix = -1; ix < 2; ++ix)
 		{
 			for (int iy = -1; iy < 2; ++iy)
 			{
-				sum = sum + sampleGrid(x + ix, y + iy);
+				sum += sample(x + ix, y + iy);
 			}
 		}
 		if (alive)
@@ -55,8 +81,10 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 			outData[idx] = (sum == 3);
 		}
 	}
+	*/
 
-	void _printToConsole()
+	/*
+	void printToConsole()
 	{
 		for (int y = 0; y < HEIGHT; ++y) {
 			for (int x = 0; x < WIDTH; ++x)
@@ -72,5 +100,5 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 		}
 		std::cout << "\n";
 	}
-	
+	*/
 };

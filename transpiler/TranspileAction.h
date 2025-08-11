@@ -141,11 +141,12 @@ public:
 		// apply all the edits.
 		
 		std::sort(pendingEdits.begin(), pendingEdits.end(), [](auto& a, auto& b) {
-			return a.range.getBegin() < b.range.getBegin();
+			return a.m_Range.getBegin() < b.m_Range.getBegin();
 			});
 		for (auto& e : pendingEdits)
 		{
-			RewriterObj.ReplaceText(e.range, e.replacement);
+			e.replace(RewriterObj);
+			
 		}
 
 		llvm::errs() << "Applied all the edits\n";

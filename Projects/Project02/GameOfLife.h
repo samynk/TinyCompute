@@ -17,42 +17,43 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 	sf::Uniform<sf::integer, 2> HEIGHT{ 32 };
 	sf::Uniform<sf::uvec3, 0> globalWorkSize{ sf::uvec3{WIDTH * HEIGHT,1,1} };
 
-	sf::uint sampleGrid(int x, int y)
+	sf::uint sampleGrid(sf::uvec2 c)
 	{
-		if (x >= 0 && y >= 0 && x < WIDTH && y < HEIGHT)
+		if (c.x >= 0 && c.y >= 0 && c.x < WIDTH && c.y < HEIGHT)
 		{
-			return inData[y * WIDTH + x];
+			return inData[c.y * WIDTH + c.x];
 		}
 		else {
 			// everything dead outside of borders.
 			return 0;
 		}
 	}
+
+	void saveToGrid(sf::uvec2 c, sf::uint value)
+	{
+		outData[c.y * WIDTH + c.x] = value;
+	}
 	 
 	// entry function matches KernelEntry concept
 	void main()
 	{
-		unsigned idx = sf::gl_GlobalInvocationID.x;
-		int x = idx % WIDTH;
-		int y = idx / HEIGHT;
-		   
-		//sf::vec3* pVec = new sf::vec3{ 1,2,3 };
-		bool alive = inData[idx];
+		sf::uvec2 coordinate = sf::gl_GlobalInvocationID["xy"_sw];
+		bool alive = sampleGrid(coordinate);
 		int sum = -alive;
 		for (int ix = -1; ix < 2; ++ix)
 		{
 			for (int iy = -1; iy < 2; ++iy)
 			{
-				sum = sum + sampleGrid(x + ix, y + iy);
+				sum = sum + sampleGrid(sf::uvec2(coordinate.x + ix, coordinate.y + iy));
 			}
 		}
 		if (alive)
 		{
-			outData[idx] = (sum == 2 || sum == 3);
+			saveToGrid(coordinate,(sum == 2 || sum == 3));
 		}
 		else
 		{
-			outData[idx] = (sum == 3);
+			saveToGrid(coordinate, (sum == 3));
 		}
 	}
 

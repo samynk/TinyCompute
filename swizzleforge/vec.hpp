@@ -23,8 +23,6 @@ namespace sf {
 	template<typename T>
 	concept GLSLType = GLSLNumericType<T> || std::same_as<T, bool>;
 
-
-
 	template<typename T, std::size_t N>
 		requires GLSLType<T> and VecSize<N>
 	class vec_base {
@@ -41,16 +39,16 @@ namespace sf {
 		// vec_base are vecs
 		template<class IT, std::size_t IN> struct is_vec<sf::vec_base<IT, IN>> : std::true_type {};
 
-		template<class U>
-		static const bool is_vec_v = is_vec<std::remove_cvref_t<U>>::value;
-
+		
 
 		// convenience variable template
 		template<class U>
 		static const std::size_t comp_count_v = comp_count<std::remove_cvref_t<U>>::value;
 
-
 	public:
+		template<class U>
+		static const bool is_vec_v = is_vec<std::remove_cvref_t<U>>::value;
+
 		struct EmptyType {};
 		using T1 = typename std::conditional_t<N >= 1, T, EmptyType>;
 		using T2 = typename std::conditional_t<N >= 2, T, EmptyType>;

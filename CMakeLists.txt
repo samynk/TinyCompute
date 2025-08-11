@@ -82,8 +82,10 @@ if (SWIZZLEFORGE_BUILD_EXAMPLES)
     add_subdirectory(examples)
     
     add_subdirectory(Projects/Project01)
+    add_subdirectory(Projects/Project02)
     set_target_properties(Project01 PROPERTIES FOLDER "03‑Examples")
 endif()
+
 
 
 # After you call add_subdirectory(llvm)  — or whatever brings them in

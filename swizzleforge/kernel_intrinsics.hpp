@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <limits>
+#include "vec.hpp"
 // ──────────────────────────────────────────────────────────────
 // 1.  Kernel entry‑point concept
 // ──────────────────────────────────────────────────────────────
@@ -24,7 +25,25 @@ namespace sf
     // Thread‑local slot that dispatcher writes before invoking kernel
     inline thread_local sf::uvec3 gl_GlobalInvocationID(0, 0, 0);
 
-	template<GLSLType T, unsigned Binding>
+	template<typename> struct is_vec_base_impl : std::false_type {};
+
+	// C++20-friendly: constrain inside the value, or in the parameter list (both shown)
+	template<typename T, auto N>
+	struct is_vec_base_impl<vec_base<T, N>>
+		: std::bool_constant< GLSLType<std::remove_cv_t<T>>&& VecSize<N> > {
+	};
+
+	// Concept: true iff the (decayed) type is vec_base<GLSLType, VecSize>
+	template<typename U>
+	concept VecBase =
+		is_vec_base_impl<std::remove_cvref_t<U>>::value;
+
+	// Now the “either scalar or vector” concept for your Uniform
+	template<typename U>
+	concept UniformValue =
+		GLSLType<std::remove_cvref_t<U>> || VecBase<U>;
+
+	template<UniformValue T, unsigned Location>
 	class Uniform
 	{
 	public:
@@ -56,7 +75,7 @@ namespace sf
 			return m_Value;
 		}
 	private:
-		unsigned m_BindingId = Binding;
+		unsigned m_Location = Location;
 		T m_Value;
 	};
 

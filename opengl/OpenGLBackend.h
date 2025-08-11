@@ -100,11 +100,13 @@ public:
 	}
 
 	template<KernelEntry K>
-	void executeImpl(K& kernel, size_t totalWork)
+	void executeImpl(K& kernel, const sf::uvec3 globalWorkSize)
 	{
-		GLuint workGroupSizeX = totalWork / kernel.local_size.x;
+		GLuint workGroupCountX = globalWorkSize.x / kernel.local_size.x;
+		GLuint workGroupCountY = globalWorkSize.y / kernel.local_size.y;
+		GLuint workGroupCountZ = globalWorkSize.z / kernel.local_size.z;
 		// Dispatch compute shader
-		glDispatchCompute(workGroupSizeX, 1, 1);
+		glDispatchCompute(workGroupCountX, workGroupCountY, workGroupCountZ);
 		GLenum error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
@@ -113,7 +115,7 @@ public:
 	}
 
 	template<KernelEntry K>
-	void useKernel(K& kernel, size_t totalWork)
+	void useKernel(K& kernel)
 	{
 		// check if kernel was compiled.
 		checkKernel(kernel);

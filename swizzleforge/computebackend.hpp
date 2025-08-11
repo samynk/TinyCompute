@@ -71,7 +71,7 @@ namespace sf
 		}
 
 		template<KernelEntry K>
-		void execute(K& k, size_t totalWork)
+		void execute(K& k, const sf::uvec3 totalWork)
 		{
 			static_assert(HasLocalSize<K>,
 				"Kernel must have a 'sf::uvec3 local_size' member.");
@@ -120,19 +120,32 @@ namespace sf
 			// no op
 		}
 
+		inline sf::uvec3 unflatten3D(uint64_t i, sf::uvec3 dims) {
+			// dims = global size (X * Y * Z total)
+			uint64_t xy = uint64_t(dims.x) * dims.y;
+			sf::uvec3 gid;
+			gid.x = uint32_t(i % dims.x);
+			gid.y = uint32_t((i / dims.x) % dims.y);
+			gid.z = uint32_t(i / xy);
+			return gid;
+		}
+
 		template<KernelEntry K>
-		void executeImpl(K& kernel, size_t totalWork)
+		void executeImpl(K& kernel, const sf::uvec3 globalWorkSize)
 		{
-			auto range = std::views::iota(std::size_t{ 0 }, totalWork);
+			if (globalWorkSize.x == 0 || globalWorkSize.y == 0 || globalWorkSize.z == 0)
+				return;
+
+			const uint64_t totalWork =
+				uint64_t(globalWorkSize.x) * globalWorkSize.y * globalWorkSize.z;
+			auto range = std::views::iota(uint64_t{ 0 }, totalWork);
 			
 			std::for_each(std::execution::par_unseq,
 				range.begin(), range.end(),
-				[&](std::size_t xi) {
-					sf::gl_GlobalInvocationID.x = xi;
+				[&](const uint64_t xi) {
+					sf::gl_GlobalInvocationID = unflatten3D(xi, globalWorkSize);
 					kernel.main();
 				});
 		}
 	};
-
-	
 }
