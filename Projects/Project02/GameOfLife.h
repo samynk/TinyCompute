@@ -8,14 +8,14 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
 	static constexpr char fileLocation[] = "gameoflife";
 
-	sf::uvec3 local_size{ 16, 1, 1 };
+	sf::uvec3 local_size{ 16, 16, 1 };
 	// annotated buffers become GLSL SSBOs or UAVs
 	sf::BindingPoint<sf::uint, 0, 0> inData;
 	sf::BindingPoint<sf::uint, 1, 0> outData;
 
 	sf::Uniform<sf::integer, 1> WIDTH{ 32 };
 	sf::Uniform<sf::integer, 2> HEIGHT{ 32 };
-	sf::Uniform<sf::uvec3, 0> globalWorkSize{ sf::uvec3{WIDTH * HEIGHT,1,1} };
+	sf::Uniform<sf::uvec3, 0> globalWorkSize{ sf::uvec3{WIDTH,HEIGHT,1} };
 
 	sf::uint sampleGrid(sf::uvec2 c)
 	{

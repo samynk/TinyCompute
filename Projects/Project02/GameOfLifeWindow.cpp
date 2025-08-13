@@ -34,7 +34,6 @@ void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 	m_GameOfLife.inData.attach(&m_initDataIn);
 	m_GameOfLife.outData.attach(&m_initDataOut);
 	m_GameOfLife._printToConsole();
-	m_GameOfLife.globalWorkSize.get().x = N;
 
 	GPUBackend gpuBackend;
 	gpuBackend.uploadBuffer(m_initDataIn);
