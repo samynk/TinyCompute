@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(SwizzleForge
         VERSION 0.1.0
-        DESCRIPTION "Regex-based single-source C++ → Compute-Shader framework"
+        DESCRIPTION "C++20 Compute-Shader framework"
         LANGUAGES CXX)
 
 
@@ -68,6 +68,7 @@ FetchContent_MakeAvailable(stb)
 # Sub-directories
 # ─────────────────────────────────────────────────────────────
 add_subdirectory(swizzleforge)
+add_subdirectory(assetlib)
 add_subdirectory(opengl)
 
 add_subdirectory(transpiler)
@@ -78,11 +79,28 @@ if (SWIZZLEFORGE_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
+set(RES_DIR "${CMAKE_SOURCE_DIR}/Resources")
+
+function(set_working_dir_to_resources target)
+  if (MSVC)  # Visual Studio generators
+    set_target_properties(${target} PROPERTIES
+      VS_DEBUGGER_WORKING_DIRECTORY "${RES_DIR}"
+    )
+  elseif (CMAKE_GENERATOR STREQUAL "Xcode")
+    # CMake 3.20+: set Xcode scheme working dir
+    set_target_properties(${target} PROPERTIES
+      XCODE_SCHEME_ENABLE_SCHEME_TO_RUN "YES"
+      XCODE_SCHEME_WORKING_DIRECTORY      "${RES_DIR}"
+    )
+  endif()
+endfunction()
+
+
 if (SWIZZLEFORGE_BUILD_EXAMPLES)
     add_subdirectory(examples)
-    
     add_subdirectory(Projects/Project01)
     add_subdirectory(Projects/Project02)
+    add_subdirectory(Projects/Project03)
     set_target_properties(Project01 PROPERTIES FOLDER "03‑Examples")
 endif()
 

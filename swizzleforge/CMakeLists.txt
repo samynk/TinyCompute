@@ -3,9 +3,7 @@ set(SWIZZLEFORGE_SRC
     "swizzle.hpp"
     "kernel_intrinsics.hpp"
     "computebackend.hpp"
-    "math/arithmetic.hpp" )
-
-    message("Current source directory for swizzleforge : ${CMAKE_CURRENT_SOURCE_DIR}")
+    "math/arithmetic.hpp"  "images/ImageFormat.h")
 
 add_library(
     swizzleforge 

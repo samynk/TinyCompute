@@ -35,13 +35,19 @@ public:
 
 	void init(const SurfaceRenderer& renderer);
 	void compute(const SurfaceRenderer& renderer);
-
 	unsigned int getTextureID() {
-		return 0;
+		if (m_pTestImage) {
+			return m_pTestImage->getSSBO_ID();
+		}
+		else {
+			return 0;
+		}
 	}
 private:
 	GameOfLifeKernel m_GameOfLife;
 
 	tc::BufferResource<tc::uint> m_initDataIn;
 	tc::BufferResource<tc::uint> m_initDataOut;
+
+	tc::BufferResource<tc::RGBA8, tc::Dim::D2>* m_pTestImage;
 };

@@ -6,7 +6,7 @@
 #include "swizzle.hpp"
 
 
-namespace sf {
+namespace tc {
 	// concepts
 	template<std::size_t N>
 	concept VecSize = (N == 2 || N == 3 || N == 4);
@@ -37,7 +37,7 @@ namespace sf {
 		// scalar types are not vecs
 		template<class IT> struct is_vec : std::false_type {};
 		// vec_base are vecs
-		template<class IT, std::size_t IN> struct is_vec<sf::vec_base<IT, IN>> : std::true_type {};
+		template<class IT, std::size_t IN> struct is_vec<tc::vec_base<IT, IN>> : std::true_type {};
 
 		
 
@@ -202,10 +202,6 @@ namespace sf {
 		}
 	};
 
-
-	
-
-
 	// dot product ---------------------------------------------------
 	template<typename T, std::size_t N>
 		requires VecSize<N>&& GLSLFloatType<T>
@@ -234,28 +230,26 @@ namespace sf {
 		return false;
 	}
 
-	
+	using vec2 = tc::vec_base<float, 2>;
+	using vec3 = tc::vec_base<float, 3>;
+	using vec4 = tc::vec_base<float, 4>;
 
-	using vec2 = sf::vec_base<float, 2>;
-	using vec3 = sf::vec_base<float, 3>;
-	using vec4 = sf::vec_base<float, 4>;
-
-	using dvec2 = sf::vec_base<double, 2>;
-	using dvec3 = sf::vec_base<double, 3>;
-	using dvec4 = sf::vec_base<double, 4>;
+	using dvec2 = tc::vec_base<double, 2>;
+	using dvec3 = tc::vec_base<double, 3>;
+	using dvec4 = tc::vec_base<double, 4>;
 
 	using integer = std::int32_t;
-	using ivec2 = sf::vec_base<std::int32_t, 2>;
-	using ivec3 = sf::vec_base<std::int32_t, 3>;
-	using ivec4 = sf::vec_base<std::int32_t, 4>;
+	using ivec2 = tc::vec_base<std::int32_t, 2>;
+	using ivec3 = tc::vec_base<std::int32_t, 3>;
+	using ivec4 = tc::vec_base<std::int32_t, 4>;
 
 	using uint = std::uint32_t;
-	using uvec2 = sf::vec_base<std::uint32_t, 2>;
-	using uvec3 = sf::vec_base<std::uint32_t, 3>;
-	using uvec4 = sf::vec_base<std::uint32_t, 4>;
+	using uvec2 = tc::vec_base<std::uint32_t, 2>;
+	using uvec3 = tc::vec_base<std::uint32_t, 3>;
+	using uvec4 = tc::vec_base<std::uint32_t, 4>;
 
-	using bvec2 = sf::vec_base<bool, 2>;
-	using bvec3 = sf::vec_base<bool, 3>;
-	using bvec4 = sf::vec_base<bool, 4>;
+	using bvec2 = tc::vec_base<bool, 2>;
+	using bvec3 = tc::vec_base<bool, 3>;
+	using bvec4 = tc::vec_base<bool, 4>;
 }
 

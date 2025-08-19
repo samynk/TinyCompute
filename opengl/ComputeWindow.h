@@ -121,7 +121,13 @@ void ComputeWindow<C>::renderLoop()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		m_Compute.compute(m_SurfaceRenderer);
-		m_SurfaceRenderer.drawQuadWithTexture();
+		if (m_Compute.getTextureID() != 0)
+		{
+			m_SurfaceRenderer.drawQuadWithTexture(m_Compute.getTextureID());
+		}
+		else {
+			m_SurfaceRenderer.drawQuadWithTexture();
+		}
 		showFPS();
 		// Swap buffers and poll IO events
 		glfwSwapBuffers(m_pWindow);

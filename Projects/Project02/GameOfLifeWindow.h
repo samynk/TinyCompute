@@ -35,9 +35,13 @@ public:
 
 	void init(const SurfaceRenderer& renderer);
 	void compute(const SurfaceRenderer& renderer);
+
+	unsigned int getTextureID() {
+		return 0;
+	}
 private:
 	GameOfLifeKernel m_GameOfLife;
 
-	sf::BufferResource<sf::uint> m_initDataIn;
-	sf::BufferResource<sf::uint> m_initDataOut;
+	tc::BufferResource<tc::uint> m_initDataIn;
+	tc::BufferResource<tc::uint> m_initDataOut;
 };

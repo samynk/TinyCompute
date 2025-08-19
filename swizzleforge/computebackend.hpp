@@ -6,13 +6,11 @@
 #include <span>
 #include <numeric>
 #include <concepts>
+#include <unordered_map>
 
 #include "kernel_intrinsics.hpp"
 
-#include <unordered_map>
-
-
-namespace sf
+namespace tc
 {
 	enum class BackendType {
 		CPU, OpenGL
@@ -21,8 +19,6 @@ namespace sf
 	enum class AccessType {
 		READ, WRITE, READWRITE
 	};
-
-	
 
 	template <typename Derived>
 	class ComputeBackend
@@ -41,40 +37,46 @@ namespace sf
 		template<typename BufferType>
 		void uploadBuffer(BufferResource<BufferType>& resource )
 		{
-			static_cast<Derived*>(this)->uploadImpl(resource);
+			static_cast<Derived*>(this)->uploadBufferImpl(resource);
 		}
 
 		template<typename BufferType>
 		void downloadBuffer(BufferResource<BufferType>& resource)
 		{
-			static_cast<Derived*>(this)->downloadImpl(resource);
+			static_cast<Derived*>(this)->downloadBufferImpl(resource);
 		}
 
 		template<typename T, unsigned Binding, unsigned Set>
-		void bindBuffer(const sf::BindingPoint<T, Binding, Set>& buffer)
+		void bindBuffer(const tc::BufferBinding<T, Binding, Set>& buffer)
 		{
-			static_cast<Derived*>(this)->bindBuffer(buffer);
+			static_cast<Derived*>(this)->bindBufferImpl(buffer);
+		}
+
+		template<tc::GPUFormat format, typename BufferType>
+		void uploadImage(BufferResource<BufferType,tc::Dim::D2>& buffer)
+		{
+			static_cast<Derived*>(this)->uploadImageImpl(format,buffer);
 		}
 
 		template<typename T, unsigned Location>
-		void bindUniform(const sf::Uniform<T, Location>& uniform)
+		void bindUniform(const tc::Uniform<T, Location>& uniform)
 		{
-			static_cast<Derived*>(this)->bindUnfirom(uniform);
+			static_cast<Derived*>(this)->bindUniformImpl(uniform);
 		}
 
 		template<KernelEntry K>
 		void useKernel(K& k)
 		{
 			static_assert(HasLocalSize<K>,
-				"Kernel must have a 'sf::uvec3 local_size' member.");
-			static_cast<Derived*>(this)->useKernel(k);
+				"Kernel must have a 'tc::uvec3 local_size' member.");
+			static_cast<Derived*>(this)->useKernelImpl(k);
 		}
 
 		template<KernelEntry K>
-		void execute(K& k, const sf::uvec3 totalWork)
+		void execute(K& k, const tc::uvec3 totalWork)
 		{
 			static_assert(HasLocalSize<K>,
-				"Kernel must have a 'sf::uvec3 local_size' member.");
+				"Kernel must have a 'tc::uvec3 local_size' member.");
 			static_cast<Derived*>(this)->executeImpl(k, totalWork);
 		
 		}
@@ -91,39 +93,45 @@ namespace sf
 		}
 
 		template<typename BufferType>
-		void uploadBuffer(BufferResource<BufferType>& buffer)
+		void uploadBufferImpl(tc::BufferResource<BufferType>& buffer)
 		{
 			// no op
 		}
 
 		template<typename BufferType>
-		void downloadBuffer(BufferResource<BufferType>& buffer)
+		void downloadBufferImpl(tc::BufferResource<BufferType>& buffer)
 		{
 			// no op
 		}
 
 		template<typename T, unsigned Binding, unsigned Set>
-		void bindBuffer(const sf::BindingPoint<T, Binding, Set>& buffer)
+		void bindBufferImpl(const tc::BufferBinding<T, Binding, Set>& buffer)
 		{
 			// no op
 		}
 
+		template<typename BufferType> 
+		void uploadImageImpl(tc::GPUFormat format, tc::BufferResource<BufferType>& buffer)
+		{
+
+		}
+
 		template<typename T, unsigned Location>
-		void bindUniform(const sf::Uniform<T, Location>& uniform)
+		void bindUniformImpl(const tc::Uniform<T, Location>& uniform)
 		{
 			// no op
 		}
 
 		template<KernelEntry K>
-		void useKernel(K& k)
+		void useKernelImpl(K& k)
 		{
 			// no op
 		}
 
-		inline sf::uvec3 unflatten3D(uint64_t i, sf::uvec3 dims) {
+		inline tc::uvec3 unflatten3D(uint64_t i, tc::uvec3 dims) {
 			// dims = global size (X * Y * Z total)
 			uint64_t xy = uint64_t(dims.x) * dims.y;
-			sf::uvec3 gid;
+			tc::uvec3 gid;
 			gid.x = uint32_t(i % dims.x);
 			gid.y = uint32_t((i / dims.x) % dims.y);
 			gid.z = uint32_t(i / xy);
@@ -131,7 +139,7 @@ namespace sf
 		}
 
 		template<KernelEntry K>
-		void executeImpl(K& kernel, const sf::uvec3 globalWorkSize)
+		void executeImpl(K& kernel, const tc::uvec3 globalWorkSize)
 		{
 			if (globalWorkSize.x == 0 || globalWorkSize.y == 0 || globalWorkSize.z == 0)
 				return;
@@ -143,7 +151,7 @@ namespace sf
 			std::for_each(std::execution::par_unseq,
 				range.begin(), range.end(),
 				[&](const uint64_t xi) {
-					sf::gl_GlobalInvocationID = unflatten3D(xi, globalWorkSize);
+					tc::gl_GlobalInvocationID = unflatten3D(xi, globalWorkSize);
 					kernel.main();
 				});
 		}

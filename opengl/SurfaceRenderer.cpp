@@ -7,12 +7,13 @@
 
 SurfaceRenderer::SurfaceRenderer(GLuint bindingId, GLuint w, GLuint h)
 	:
-	m_FullScreenImage{bindingId,w,h,GL_READ_ONLY },
+	m_FullScreenImage{ bindingId,w,h,GL_READ_ONLY },
+	m_FSTexture{ std::numeric_limits<unsigned int>::max() },
 	m_ProgramID{ 0 },
 	m_VertexArrayObject{ 0 },
 	m_VertexBufferObject{ 0 },
-	m_Width{w},
-	m_Height{h}
+	m_Width{ w },
+	m_Height{ h }
 {
 }
 
@@ -34,7 +35,7 @@ void SurfaceRenderer::init()
 	createShaderProgram();
 	m_FullScreenImage.init();
 	setupQuad();
-	
+
 }
 
 void SurfaceRenderer::bindAsCompute() const
@@ -80,7 +81,7 @@ void SurfaceRenderer::setupQuad()
 	glBindVertexArray(m_VertexArrayObject);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_VertexBufferObject);
-	glBufferData(GL_ARRAY_BUFFER, 24*sizeof(float), &quadVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), &quadVertices, GL_STATIC_DRAW);
 
 	// Position attribute
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
@@ -95,10 +96,23 @@ void SurfaceRenderer::setupQuad()
 
 void SurfaceRenderer::drawQuadWithTexture()
 {
+	if (std::numeric_limits<unsigned int>::max() == m_FSTexture)
+	{
+		drawQuadWithTexture(m_FullScreenImage.getTextureID());
+	}
+	else {
+		drawQuadWithTexture(m_FSTexture);
+	}
+}
+
+void SurfaceRenderer::drawQuadWithTexture(unsigned int imageID)
+{
 	// Set the texture uniform
 	glUseProgram(m_ProgramID);
 	glUniform1i(m_screenTextureLoc, 0);
-	m_FullScreenImage.bindAsTexture();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, imageID);
 
 	// Draw the quad
 	glBindVertexArray(m_VertexArrayObject);

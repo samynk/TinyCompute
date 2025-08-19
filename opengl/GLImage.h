@@ -17,11 +17,16 @@ public:
     GLImage(GLImage&& other) noexcept;
     GLImage& operator=(GLImage&& other) noexcept;
 
+
     void init();
     
     void bindAsCompute() const;
     void bindAsCompute(GLuint bindingSlot) const;
     void bindAsTexture() const;
+    
+    GLuint getTextureID() {
+        return m_ImageID;
+    }
     void write(const std::string& fileLocation) const;
 
 private:

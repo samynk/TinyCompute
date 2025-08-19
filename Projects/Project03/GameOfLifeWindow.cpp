@@ -1,7 +1,9 @@
 #include "GameOfLifeWindow.h"
 #include "OpenGLBackend.h"
+#include "ImageLoader.h"
 
 GameOfLifeWindow::GameOfLifeWindow(GLuint width, GLuint height)
+	:m_pTestImage{nullptr}
 {
 
 }
@@ -34,7 +36,6 @@ void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 	m_GameOfLife.inData.attach(&m_initDataIn);
 	m_GameOfLife.outData.attach(&m_initDataOut);
 	m_GameOfLife._printToConsole();
-	m_GameOfLife.globalWorkSize.get().x = N;
 
 	GPUBackend gpuBackend;
 	gpuBackend.uploadBuffer(m_initDataIn);
@@ -51,6 +52,22 @@ void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 
 	gpuBackend.downloadBuffer(m_initDataOut);
 	m_GameOfLife._printToConsole();
+
+	
+	m_pTestImage = 
+		tc::assets::loadImage<tc::RGBA8>("computeshaders/imageprocessing/test/test.png");
+	
+	(*m_pTestImage)[tc::uvec2{ 3, 3 }] = tc::RGBA8{ 255,0,0,255 };
+
+	gpuBackend.uploadImage<tc::GPUFormat::RGBA8>(*m_pTestImage);
+
+	tc::assets::writeImage<tc::RGBA8>("c:/data/output.png", m_pTestImage);
+	std::cout << "dimension: " << m_pTestImage->size();
+
+	tc::ImageBinding<tc::GPUFormat::RGBA8, tc::Dim::D2, tc::RGBA8, 1> image;
+	image.attach(m_pTestImage);
+	tc::uvec4  result = tc::imageRead(image, tc::uvec2{3,3});
+
 }
 
 void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
@@ -60,12 +77,14 @@ void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
 	/*backend.bindBuffer(kern.inData);
 	backend.bindBuffer(kern.outData);*/
 
-	backend.execute(m_GameOfLife, m_GameOfLife.globalWorkSize);
-	m_GameOfLife._printToConsole();
+	backend.execute(m_GameOfLife, m_GameOfLife.globalWorkSize.get());
+	// m_GameOfLife._printToConsole();
 	// swap buffer views
 	tc::BufferResource<tc::uint>* oldFrame = m_GameOfLife.inData.getBufferData();
 	tc::BufferResource<tc::uint>* newFrame = m_GameOfLife.outData.getBufferData();
 	m_GameOfLife.inData.attach(newFrame);
 	m_GameOfLife.outData.attach(oldFrame);
+
+	
 
 }

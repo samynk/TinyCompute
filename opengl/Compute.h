@@ -13,4 +13,5 @@ concept HasCompute =
     requires(T obj, const SurfaceRenderer & renderer) {
         { obj.init(renderer) } -> std::same_as<void>;
         { obj.compute(renderer) } -> std::same_as<void>;
-    };
+        { obj.getTextureID() }-> std::same_as<unsigned int>;
+    }; 

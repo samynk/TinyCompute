@@ -2,11 +2,6 @@
 #include <iostream>
 #include <vector>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
-
 GLImage::GLImage(GLuint binding, GLuint width, GLuint height, GLenum accessType)
 	:m_ImageID{ 0 },
 	m_Binding{ binding },
@@ -99,8 +94,8 @@ void GLImage::initEmpty() {
 }
 
 void GLImage::initTexture() {
-	int width, height, nrChannels;
-	unsigned char* data = stbi_load(m_TextureLocation.c_str(), &width, &height, &nrChannels, 0);
+	int width=0, height=0, nrChannels=0;
+	unsigned char* data = nullptr;// stbi_load(m_TextureLocation.c_str(), &width, &height, &nrChannels, 0);
 	if (data == nullptr) {
 		throw std::runtime_error("Failed to load texture image from " + m_TextureLocation);
 	}
@@ -110,7 +105,7 @@ void GLImage::initTexture() {
 	glGenTextures(1, &m_ImageID);
 
 	if (m_ImageID == 0) {
-		stbi_image_free(data);
+		//stbi_image_free(data);
 		throw std::runtime_error("Failed to generate texture.");
 	}
 
@@ -134,7 +129,7 @@ void GLImage::initTexture() {
 		format = GL_RGBA;
 		break;
 	default:
-		stbi_image_free(data);
+		//stbi_image_free(data);
 		throw std::runtime_error("Unsupported number of channels in texture image.");
 	}
 
@@ -145,11 +140,11 @@ void GLImage::initTexture() {
 	GLenum error = glGetError();
 	if (error != GL_NO_ERROR)
 	{
-		stbi_image_free(data);
+		//stbi_image_free(data);
 		throw std::runtime_error("OpenGL Error in GLImage::GLImage(file): " + std::to_string(error));
 	}
 
-	stbi_image_free(data);
+	//stbi_image_free(data);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -200,10 +195,10 @@ void GLImage::write(const std::string& fileLocation) const
 		throw std::runtime_error("OpenGL Error in GLImage::write(): " + std::to_string(error));
 	}
 
-	if (!stbi_write_png(fileLocation.c_str(), width, height, nrChannels, data.data(), width * nrChannels)) {
+	/*if (!stbi_write_png(fileLocation.c_str(), width, height, nrChannels, data.data(), width * nrChannels)) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 		throw std::runtime_error("Failed to write image to file: " + fileLocation);
-	}
+	}*/
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

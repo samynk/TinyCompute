@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include <limits>
+#include <vector>
+
 #include "vec.hpp"
+#include "images/ImageFormat.h"
 // ──────────────────────────────────────────────────────────────
 // 1.  Kernel entry‑point concept
 // ──────────────────────────────────────────────────────────────
@@ -17,13 +20,13 @@ concept KernelEntry = requires(K k)
 
 template<typename K>
 constexpr bool HasLocalSize = requires(K k) {
-    { k.local_size } -> std::convertible_to<sf::uvec3>;
+    { k.local_size } -> std::convertible_to<tc::uvec3>;
 };
 
-namespace sf
+namespace tc
 {
     // Thread‑local slot that dispatcher writes before invoking kernel
-    inline thread_local sf::uvec3 gl_GlobalInvocationID(0, 0, 0);
+    inline thread_local tc::uvec3 gl_GlobalInvocationID(0, 0, 0);
 
 	template<typename> struct is_vec_base_impl : std::false_type {};
 
@@ -42,6 +45,52 @@ namespace sf
 	template<typename U>
 	concept UniformValue =
 		GLSLType<std::remove_cvref_t<U>> || VecBase<U>;
+
+
+	template<tc::Dim D>
+	struct DimTraits;
+
+	// Dimension 1 --> use uint (uint32_t)
+	template<>
+	struct DimTraits<tc::Dim::D1> {
+		using IndexType = tc::uint;
+
+		static constexpr unsigned product(IndexType x) {
+			return x;
+		}
+
+		static constexpr unsigned coordinateToIndex(IndexType coord, IndexType /*size*/) {
+			return coord;
+		}
+	};
+
+	// Dimension 2 --> use uvec2
+	template<>
+	struct DimTraits<tc::Dim::D2> {
+		using IndexType = vec_base<uint, 2>;
+
+		static constexpr unsigned product(IndexType dim) {
+			return dim.x * dim.y;
+		}
+
+		static constexpr unsigned coordinateToIndex(IndexType coord, IndexType size) {
+			return coord.y * size.x + coord.x;
+		}
+	};
+
+	// Dimension 3 --> use uvec3
+	template<>
+	struct DimTraits<tc::Dim::D3> {
+		using IndexType = vec_base<uint, 3>;
+
+		static constexpr unsigned product(IndexType dim) {
+			return dim.x * dim.y * dim.z;
+		}
+
+		static constexpr unsigned coordinateToIndex(IndexType coord, IndexType size) {
+			return (coord.z * size.y + coord.y) * size.x + coord.x;
+		}
+	};
 
 	template<UniformValue T, unsigned Location>
 	class Uniform
@@ -79,38 +128,43 @@ namespace sf
 		T m_Value;
 	};
 
-	template<typename T>
+	template<typename T, tc::Dim D=tc::Dim::D1>
 	class BufferResource
 	{
 	public:
-		BufferResource() 
+		using Traits = DimTraits<D>;
+		using dimType = typename Traits::IndexType;
+
+		BufferResource()
+			:m_BufferSize{ 0 }
 		{
 			// no size
 		}
 
-		BufferResource(unsigned size)
+		BufferResource(dimType bufferSize)
+			:m_BufferSize(bufferSize),
+			m_Data(Traits::product(bufferSize) )
 		{
-			m_Data.resize(size);
 		}
 
-		const T& operator[](unsigned idx) const
+		const T& operator[](dimType index) const
 		{
-			return m_Data[idx];
+			return m_Data[Traits::coordinateToIndex(index,m_BufferSize)];
 		}
 
-		T& operator[](unsigned idx)
+		T& operator[](dimType index)
 		{
-			return m_Data[idx];
+			return m_Data[Traits::coordinateToIndex(index, m_BufferSize)];
 		}
+
 
 		unsigned size() const {
 			return m_Data.size();
 		}
 
-		T* data()  {
+		T* data() {
 			return m_Data.data();
 		}
-
 
 		unsigned int getSSBO_ID() const {
 			return m_SSBO_ID;
@@ -119,16 +173,21 @@ namespace sf
 		void setSSBO_ID(unsigned int ssbo_id) {
 			m_SSBO_ID = ssbo_id;
 		}
+
+		dimType getDimension() {
+			return m_BufferSize;
+		}
 	private:
+		dimType m_BufferSize;
 		std::vector<T> m_Data;
 		unsigned int m_SSBO_ID{ std::numeric_limits<unsigned int>::max() };
 	};
 
 	template<typename T, unsigned Binding, unsigned Set = 0 >
-	class BindingPoint
+	class BufferBinding
 	{
 	public:
-		BindingPoint()
+		BufferBinding()
 			:m_pBufferData{ nullptr }
 		{
 
@@ -161,4 +220,85 @@ namespace sf
 	private:
 		BufferResource<T>* m_pBufferData;
 	};
+
+	template<tc::GPUFormat G>
+	struct GPUFormatTraits;
+
+	template<>
+	struct GPUFormatTraits<tc::GPUFormat::RGBA8> {
+		using ChannelType = uint8_t;
+		using VectorType = tc::uvec4;
+		static constexpr uint8_t NumChannels = 4;
+		static inline constexpr uint8_t indices[4] = { 0,1,2,3 };
+	};
+
+	template<tc::GPUFormat G, tc::Dim D, tc::PixelType pixType, unsigned Binding, unsigned Set = 0 >
+	class ImageBinding
+	{
+	public:
+		ImageBinding()
+			:m_pBufferData{nullptr}
+		{
+
+		}
+
+		void attach(BufferResource<pixType,D>* pData) {
+			m_pBufferData = pData;
+		}
+
+		unsigned size() const {
+			return m_pBufferData->size();
+		}
+
+		BufferResource<pixType,D>* getBufferData() const {
+			return m_pBufferData;
+		}
+
+		inline static constexpr tc::GPUFormat GPUFormat = G;
+		inline static constexpr tc::Dim Dimension = D;
+		inline static constexpr unsigned BINDING = Binding;
+		inline static constexpr unsigned SET = Set;
+	private:
+		BufferResource<pixType,D>* m_pBufferData;
+	};
+
+	template<class Src, class Dst>
+	struct channel_convert;
+
+	// Identity (no-op)
+	template<class T>
+	struct channel_convert<T, T> {
+		static constexpr T apply(T v) noexcept { return v; }
+	};
+
+	template<>
+	struct channel_convert<std::uint8_t, float> {
+		static constexpr float apply(std::uint8_t v) noexcept {
+			return float(v) * (1.0f / 255.0f);
+		}
+	};
+
+
+	template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+	auto imageRead(const ImageBinding<G, D, P, B, S>& image, uvec2 uv)
+	{
+		using gpuTraits = GPUFormatTraits<G>;
+		auto* buf = image.getBufferData();
+		if (!buf) throw std::runtime_error("imageRead: no buffer attached");
+
+		// leverage BufferResource’s dimensional indexing
+	    P px = (*buf)[uv]; 
+		// convert px to gpu format 
+		using T1 = P::ChannelType;
+		using T2 = gpuTraits::ChannelType;
+		
+		channel_convert<T1,T2> converter;
+		using resultType = gpuTraits::VectorType;
+		resultType result{};
+		for (uint8_t c = 0; c < gpuTraits::NumChannels; ++c)
+		{
+			result[c] = converter.apply(px[gpuTraits::indices[c]]);
+		}
+		return result;               // map to shader-side texel type
+	}
 }

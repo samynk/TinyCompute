@@ -52,6 +52,10 @@ public:
     void bindAsCompute() const;
     void bindAsCompute(GLuint bindingSlot) const;
     void drawQuadWithTexture();
+    void drawQuadWithTexture(unsigned int imageID);
+    void setTextureID(unsigned int textureID) {
+        m_FSTexture = textureID;
+    }
 
     GLuint getWidth() const {
         return m_Width;
@@ -82,6 +86,8 @@ private:
 
     // Automatically released.
     GLImage m_FullScreenImage;
+    // replace full screen image with your own.
+    GLuint m_FSTexture;
 
     // To release in destructor.
     GLuint m_ProgramID;

@@ -8,16 +8,18 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 {
 	static constexpr char fileLocation[] = "gameoflife";
 
-	sf::uvec3 local_size{ 16, 16, 1 };
+	tc::uvec3 local_size{ 16, 16, 1 };
 	// annotated buffers become GLSL SSBOs or UAVs
-	sf::BindingPoint<sf::uint, 0, 0> inData;
-	sf::BindingPoint<sf::uint, 1, 0> outData;
+	tc::BufferBinding<tc::uint, 0, 0> inData;
+	tc::BufferBinding<tc::uint, 1, 0> outData;
 
-	sf::Uniform<sf::integer, 1> WIDTH{ 32 };
-	sf::Uniform<sf::integer, 2> HEIGHT{ 32 };
-	sf::Uniform<sf::uvec3, 0> globalWorkSize{ sf::uvec3{WIDTH,HEIGHT,1} };
+	tc::Uniform<tc::integer, 1> WIDTH{ 32 };
+	tc::Uniform<tc::integer, 2> HEIGHT{ 32 };
+	tc::Uniform<tc::uvec3, 0> globalWorkSize{ tc::uvec3{WIDTH,HEIGHT,1} };
 
-	sf::uint sampleGrid(sf::uvec2 c)
+
+
+	tc::uint sampleGrid(tc::uvec2 c)
 	{
 		if (c.x >= 0 && c.y >= 0 && c.x < WIDTH && c.y < HEIGHT)
 		{
@@ -29,7 +31,7 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 		}
 	}
 
-	void saveToGrid(sf::uvec2 c, sf::uint value)
+	void saveToGrid(tc::uvec2 c, tc::uint value)
 	{
 		outData[c.y * WIDTH + c.x] = value;
 	}
@@ -37,14 +39,14 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 	// entry function matches KernelEntry concept
 	void main()
 	{
-		sf::uvec2 coordinate = sf::gl_GlobalInvocationID["xy"_sw];
+		tc::uvec2 coordinate = tc::gl_GlobalInvocationID["xy"_sw];
 		bool alive = sampleGrid(coordinate);
 		int sum = -alive;
 		for (int ix = -1; ix < 2; ++ix)
 		{
 			for (int iy = -1; iy < 2; ++iy)
 			{
-				sum = sum + sampleGrid(sf::uvec2(coordinate.x + ix, coordinate.y + iy));
+				sum = sum + sampleGrid(tc::uvec2(coordinate.x + ix, coordinate.y + iy));
 			}
 		}
 		if (alive)

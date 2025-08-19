@@ -48,8 +48,10 @@ private:
 	std::string getGLSLDataTypeAsString(GLSLDataType);
 	unsigned int getGSLDataTypeRank(GLSLDataType);
 	void castTo(clang::Expr* pExpr, GLSLDataType targetCast);
-	bool checkBindingPoint(const clang::FieldDecl* pField);
-	bool rewriteBindingPoint(const clang::FieldDecl* pField);
+	bool checkBufferBinding(const clang::FieldDecl* pField);
+	bool rewriteBufferBinding(const clang::FieldDecl* pField);
+	bool checkImageBinding(const clang::FieldDecl* pField);
+	bool rewriteImageBinding(const clang::FieldDecl* pField);
 	bool checkUniformField(clang::FieldDecl* pField);
 	bool rewriteUniform(const clang::FieldDecl* pField);
 	

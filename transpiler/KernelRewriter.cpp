@@ -23,10 +23,10 @@ std::optional<std::string> KernelRewriter::glslTypeForVecBase(clang::QualType qt
 	const auto* Spec = llvm::dyn_cast<ClassTemplateSpecializationDecl>(RD);
 	if (!Spec) return std::nullopt;
 
-	// Make sure it is sf::vec_base<..., ...>
+	// Make sure it is tc::vec_base<..., ...>
 	// (compare the primary template’s qualified name)
 	const auto* Prim = Spec->getSpecializedTemplate();
-	if (!Prim || Prim->getQualifiedNameAsString() != "sf::vec_base")
+	if (!Prim || Prim->getQualifiedNameAsString() != "tc::vec_base")
 		return std::nullopt;
 
 	const auto& args = Spec->getTemplateArgs().asArray();
@@ -106,7 +106,7 @@ unsigned int KernelRewriter::getGSLDataTypeRank(GLSLDataType type)
 
 
 
-bool KernelRewriter::rewriteBindingPoint(const clang::FieldDecl* FD) {
+bool KernelRewriter::rewriteBufferBinding(const clang::FieldDecl* FD) {
 	using namespace clang;
 	const SourceManager& SM = m_pASTContext->getSourceManager();
 
@@ -168,10 +168,11 @@ bool KernelRewriter::rewriteBindingPoint(const clang::FieldDecl* FD) {
 	return true;
 }
 
+
 bool KernelRewriter::VisitFieldDecl(clang::FieldDecl* pField)
 {
-	if (checkBindingPoint(pField)) {
-		rewriteBindingPoint(pField);
+	if (checkBufferBinding(pField)) {
+		rewriteBufferBinding(pField);
 	}
 	else if (checkUniformField(pField)) {
 		rewriteUniform(pField);
@@ -195,13 +196,13 @@ bool KernelRewriter::VisitFunctionDecl(clang::FunctionDecl* pFunction)
 	return true;
 }
 
-bool KernelRewriter::checkBindingPoint(const clang::FieldDecl* pField) {
+bool KernelRewriter::checkBufferBinding(const clang::FieldDecl* pField) {
 	using namespace clang::ast_matchers;
 	auto bindingPointMatcher = fieldDecl(
 		hasType(qualType(hasDeclaration(
-			classTemplateSpecializationDecl(hasName("BindingPoint"))
+			classTemplateSpecializationDecl(hasName("BufferBinding"))
 		)))
-	).bind("bindingPoint");
+	).bind("bufferBinding");
 
 	auto innerMatches = match(
 		bindingPointMatcher,
@@ -271,6 +272,8 @@ bool KernelRewriter::rewriteUniform(const clang::FieldDecl* FD) {
 	return true;
 }
 
+
+
 bool KernelRewriter::checkUniformField(clang::FieldDecl* pField) {
 	using namespace clang::ast_matchers;
 	auto uniformMatcher = fieldDecl(
@@ -293,6 +296,95 @@ bool KernelRewriter::checkUniformField(clang::FieldDecl* pField) {
 	}
 
 }
+
+
+
+bool KernelRewriter::rewriteImageBinding(const clang::FieldDecl* FD)
+{
+	using namespace clang;
+	const SourceManager& SM = m_pASTContext->getSourceManager();
+
+	const QualType QT = FD->getType();
+	const TemplateSpecializationType* TST = QT->getAs<TemplateSpecializationType>();
+	if (!TST) return true;
+
+	QualType elemType;
+	unsigned binding = 0, set = 0;
+
+	if (const auto* CTSDecl = dyn_cast<ClassTemplateSpecializationDecl>(
+		TST->getAsRecordDecl())) {
+
+		const auto& Args = CTSDecl->getTemplateArgs();
+		if (Args.size() >= 3) {
+			// Elem type is Arg 0
+			QualType elemType = Args[0].getAsType();
+
+			// binding is Arg 1
+			unsigned binding = 0;
+			if (Args[1].getKind() == clang::TemplateArgument::ArgKind::Integral) {
+				binding = static_cast<unsigned>(Args[1].getAsIntegral().getZExtValue());
+			}
+
+			// set is Arg 2
+			unsigned set = 0;
+			if (Args[2].getKind() == clang::TemplateArgument::ArgKind::Integral) {
+				set = static_cast<unsigned>(Args[2].getAsIntegral().getZExtValue());
+			}
+
+			auto glslElemTypeOpt = glslTypeForElement(elemType);
+			if (!glslElemTypeOpt) {
+				return true;
+			}
+			std::string glslElemType = *glslElemTypeOpt;
+
+			std::string varName = FD->getNameAsString();
+			// Build GLSL buffer declaration (SSBO style)
+			std::string glsl = "layout(set = " + std::to_string(set) +
+				", binding = " + std::to_string(binding) + ") buffer " + "_" + varName + "Layout" + " {"
+				+ glslElemType + " " + varName + "[]; }; ";
+
+			llvm::errs() << "Replacing binding with :\n" << glsl << "\n.";
+
+			// Replace the entire field declaration (including initializer)
+			SourceLocation endLoc = Lexer::getLocForEndOfToken(
+				FD->getSourceRange().getEnd(), 0, SM, m_pASTContext->getLangOpts());
+			SourceRange fullRange(FD->getSourceRange().getBegin(), endLoc);
+
+			PendingEdit edit{ fullRange, glsl };
+			m_PendingEdits.emplace_back(edit);
+			return false;
+		}
+		else {
+			return true;
+		}
+
+	}
+	return true;
+}
+
+bool KernelRewriter::checkImageBinding(const clang::FieldDecl* pField)
+{
+	using namespace clang::ast_matchers;
+	auto uniformMatcher = fieldDecl(
+		hasType(qualType(hasDeclaration(
+			classTemplateSpecializationDecl(hasName("Uniform"))
+		)))
+	);
+
+	auto innerMatches = match(
+		uniformMatcher,
+		*pField,
+		*m_pASTContext
+	);
+	if (!innerMatches.empty())
+	{
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 
 bool KernelRewriter::VisitVarDecl(clang::VarDecl* pVar) {
 	clang::QualType type = pVar->getType();

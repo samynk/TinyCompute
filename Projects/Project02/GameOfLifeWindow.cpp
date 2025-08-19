@@ -13,15 +13,15 @@ GameOfLifeWindow::~GameOfLifeWindow()
 void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 {
 
-	sf::uint w = m_GameOfLife.WIDTH;
-	sf::uint h = m_GameOfLife.HEIGHT;
-	sf::uint N = w * h;
-	m_initDataIn = sf::BufferResource<sf::uint>{ N };
-	m_initDataOut = sf::BufferResource<sf::uint>{ N };
-	sf::uint offsetX = 7;
-	sf::uint offsetY = 7;
-	sf::uint pw = 18;
-	sf::uint ph = 18;
+	tc::uint w = m_GameOfLife.WIDTH;
+	tc::uint h = m_GameOfLife.HEIGHT;
+	tc::uint N = w * h;
+	m_initDataIn = tc::BufferResource<tc::uint>{ N };
+	m_initDataOut = tc::BufferResource<tc::uint>{ N };
+	tc::uint offsetX = 7;
+	tc::uint offsetY = 7;
+	tc::uint pw = 18;
+	tc::uint ph = 18;
 	for (int y = 0; y < ph; ++y) {
 		for (int x = 0; x < pw; ++x) {
 			std::size_t idx = (y+offsetY) * w + x+offsetX;
@@ -54,7 +54,7 @@ void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 
 void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
 {
-	sf::CPUBackend backend;
+	tc::CPUBackend backend;
 	// actually do the binding. (corresponds to glBindBufferBase, no-op on cpu, already bound in memory).
 	/*backend.bindBuffer(kern.inData);
 	backend.bindBuffer(kern.outData);*/
@@ -62,8 +62,8 @@ void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
 	backend.execute(m_GameOfLife, m_GameOfLife.globalWorkSize);
 	m_GameOfLife._printToConsole();
 	// swap buffer views
-	sf::BufferResource<sf::uint>* oldFrame = m_GameOfLife.inData.getBufferData();
-	sf::BufferResource<sf::uint>* newFrame = m_GameOfLife.outData.getBufferData();
+	tc::BufferResource<tc::uint>* oldFrame = m_GameOfLife.inData.getBufferData();
+	tc::BufferResource<tc::uint>* newFrame = m_GameOfLife.outData.getBufferData();
 	m_GameOfLife.inData.attach(newFrame);
 	m_GameOfLife.outData.attach(oldFrame);
 
