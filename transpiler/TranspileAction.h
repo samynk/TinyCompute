@@ -61,9 +61,6 @@ public:
 
 
 		Finder.addMatcher(kernelStructMatcher, &KernelLocator);
-		/*Finder.addMatcher(bindingPointMatcher, &bpCallback);
-		Finder.addMatcher(uniformMatcher, &bpCallback);
-		Finder.addMatcher(unsignedMatcher, &bpCallback);*/
 		return Finder.newASTConsumer();
 	}
 

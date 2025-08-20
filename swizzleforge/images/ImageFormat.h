@@ -4,10 +4,19 @@
 namespace tc {
 	enum class GPUFormat {
 		R32F,
-		RGBA8
+		RGBA8,
+		R8UI
 	};
 
-	enum class Dim : uint32_t {
+	enum class Scalar {
+		FLOAT,
+		INT,
+		UINT,
+		UNORM,
+		SNORM
+	};
+
+	enum class Dim : uint8_t {
 		D1 = 1u,
 		D2 = 2u,
 		D3 = 3u
@@ -32,6 +41,19 @@ namespace tc {
 		DEPTH_STENCIL
 	};
 
+	enum class Channel : std::uint8_t {R,G,B,A};
+
+	template<typename T>
+	constexpr T channel_min() noexcept {
+		if constexpr(std::is_floating_point_v<T>) return T(0);
+		else return std::numeric_limits<T>::min();
+	}
+	
+	template<typename T>
+	constexpr T channel_max() noexcept {
+		if constexpr (std::is_floating_point_v<T>) return T(1);
+		else return std::numeric_limits<T>::max();
+	}
 
 	template<typename T, uint8_t N>
 	struct Pixel {
@@ -54,6 +76,117 @@ namespace tc {
 		using ChannelType = T;
 	};
 
+	template<typename T>
+	struct Pixel<T, 1>
+	{
+		union {
+			T r;
+			std::array<T, 1> data;
+		};
+
+		template<Channel C>
+		constexpr T get() const noexcept
+		{
+			if constexpr (C != Channel::A) return r;
+			else return channel_max<T>();
+		}
+
+		template<Channel C>
+		constexpr void set(T value) noexcept
+		{
+			if constexpr (C != Channel::A) r = value;
+			// ignore A
+		}
+		static constexpr uint8_t NumChannels = 1;
+		using ChannelType = T;
+	};
+
+	template<typename T>
+	struct Pixel<T, 2>
+	{
+		union {
+			struct { T r, a; };
+			std::array<T, 2> data;
+		};
+
+		template<Channel C>
+		constexpr T get() const noexcept
+		{
+			if constexpr (C != Channel::A) return r;
+			else return a;
+		}
+
+		template<Channel C>
+		constexpr void set(T value) noexcept
+		{
+			if constexpr (C != Channel::A) r = value;
+			else a = value;
+		}
+
+		static constexpr uint8_t NumChannels = 2;
+		using ChannelType = T;
+	};
+
+	template<typename T>
+	struct Pixel<T, 3>
+	{
+		union {
+			struct { T r, g, b; };
+			std::array<T, 3> data;
+		};
+
+		template<Channel C>
+		constexpr T get() const noexcept
+		{
+			if constexpr (C == Channel::R) return r;
+			else if constexpr (C == Channel::G) return g;
+			else if constexpr (C == Channel::B) return b;
+			else return channel_max<T>();
+		}
+
+		template<Channel C>
+		constexpr void set(T value) noexcept
+		{
+			if constexpr (C == Channel::R) r = value;
+			else if constexpr (C == Channel::G) g = value;
+			else if constexpr (C == Channel::B) b = value;
+			// don't write alpha.
+		}
+
+		static constexpr uint8_t NumChannels = 3;
+		using ChannelType = T;
+	};
+
+	template<typename T>
+	struct Pixel<T, 4>
+	{
+		union {
+			struct { T r, g, b, a; };
+			std::array<T, 4> data;
+		};
+
+		template<Channel C>
+		constexpr T get() const noexcept
+		{
+			if constexpr (C == Channel::R) return r;
+			else if constexpr (C == Channel::G) return g;
+			else if constexpr (C == Channel::B) return b;
+			else return a;
+		}
+
+		template<Channel C>
+		constexpr void set(T value) noexcept
+		{
+			if constexpr (C == Channel::R) r = value;
+			else if constexpr (C == Channel::G) g = value;
+			else if constexpr (C == Channel::B) b = value;
+			else a = value;
+		}
+
+		static constexpr uint8_t NumChannels = 4;
+		using ChannelType = T;
+	};
+
 	// Pixel concept
 	template<typename X>
 	struct is_pixel_specialization : std::false_type {};
@@ -71,9 +204,9 @@ namespace tc {
 	concept PixelType = is_pixel_specialization_v<P>;
 
 	using R8 = Pixel<uint8_t, 1>;
-	using RG8 = Pixel<uint8_t, 2>;
+	using RA8 = Pixel<uint8_t, 2>;
 	using RGB8 = Pixel<uint8_t, 3>;
 	using RGBA8 = Pixel<uint8_t, 4>;
 
-
+	using R8UI = Pixel<uint8_t, 1>;
 }

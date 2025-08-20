@@ -25,7 +25,7 @@ namespace tc::assets {
         using ResourceType = BufferResource<P, tc::Dim::D2>;
         tc::uint w = static_cast<tc::uint>(dimension.x);
         tc::uint h = static_cast<tc::uint>(dimension.y);
-        auto* buffer = new ResourceType(uvec2{w,h});
+        auto* buffer = new ResourceType(ivec2{w,h});
 
         std::memcpy(buffer->data(), pixelData, w * h * sizeof(P));
         

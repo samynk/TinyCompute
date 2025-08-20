@@ -5,7 +5,9 @@
 #include <clang/Basic/DiagnosticIDs.h>
 
 #include <unordered_set>
+#include <map>
 #include "PendingEdit.h"
+#include "ImageFormatDescriptor.h"
 
 enum class GLSLDataType {
 	BOOL, INT, UINT, FLOAT, DOUBLE, OTHER
@@ -21,12 +23,12 @@ public:
 	bool VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCast);
 
 	static void focusedDump(const clang::Stmt* S, clang::ASTContext& Ctx);
-	
+
 	bool VisitCXXConstructExpr(clang::CXXConstructExpr* pConstructorCall);
 	bool VisitCXXFunctionalCastExpr(clang::CXXFunctionalCastExpr* pCastEpr);
 
 	clang::SourceLocation afterLSquare(const clang::Expr* Base);
-    clang::SourceLocation afterRSquare(const clang::Expr* Index);
+	clang::SourceLocation afterRSquare(const clang::Expr* Index);
 
 	bool VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr* E);
 
@@ -50,11 +52,15 @@ private:
 	void castTo(clang::Expr* pExpr, GLSLDataType targetCast);
 	bool checkBufferBinding(const clang::FieldDecl* pField);
 	bool rewriteBufferBinding(const clang::FieldDecl* pField);
+
 	bool checkImageBinding(const clang::FieldDecl* pField);
 	bool rewriteImageBinding(const clang::FieldDecl* pField);
+
 	bool checkUniformField(clang::FieldDecl* pField);
 	bool rewriteUniform(const clang::FieldDecl* pField);
-	
+
+	std::optional<std::string> getUnqualifiedEnumType(const clang::TemplateArgument& ta);
+
 	clang::ASTContext* m_pASTContext;
 	std::vector<PendingEdit>& m_PendingEdits;
 
@@ -64,5 +70,26 @@ private:
 		"gl_LocalInvocationID",
 		"gl_GlobalInvocationID",
 		"gl_LocalInvocationIndex"
+	};
+
+	inline static const std::map<std::string, ImageFormatDescriptor> m_ImageFormats =
+	{
+		{"RGBA8",{"rgba8",tc::Scalar::UNORM} },
+		{"R32F", {"r32f",tc::Scalar::FLOAT} },
+		{"R8UI", {"r8ui",tc::Scalar::UINT}}
+	};
+
+	inline static const std::map<std::string, std::string> m_DimensionSuffix =
+	{
+		{"D2","2D"},{"D3","3D"},{"Cube", "Cube"}
+	};
+
+	inline static const std::map<tc::Scalar, std::string> m_TypePrefix =
+	{
+		{tc::Scalar::FLOAT, ""},
+		{tc::Scalar::INT, "i"},
+		{tc::Scalar::UINT, "u"},
+		{tc::Scalar::UNORM, ""},
+		{tc::Scalar::SNORM, ""}
 	};
 };

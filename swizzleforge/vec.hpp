@@ -23,16 +23,16 @@ namespace tc {
 	template<typename T>
 	concept GLSLType = GLSLNumericType<T> || std::same_as<T, bool>;
 
-	template<typename T, std::size_t N>
+	template<typename T, uint8_t N>
 		requires GLSLType<T> and VecSize<N>
 	class vec_base {
 		// primary template ⇒ any non‑vector type counts as 1
 		template<class U>
-		struct comp_count :std::integral_constant<std::size_t, 1> {};
+		struct comp_count :std::integral_constant<uint8_t, 1> {};
 
 		// partial specialization ⇒ a vector contributes its dimension N
-		template<typename IT, std::size_t IN>
-		struct comp_count<vec_base<IT, IN>> : std::integral_constant<std::size_t, IN> {};
+		template<typename IT, uint8_t IN>
+		struct comp_count<vec_base<IT, IN>> : std::integral_constant<uint8_t, IN> {};
 
 		// scalar types are not vecs
 		template<class IT> struct is_vec : std::false_type {};
@@ -43,7 +43,7 @@ namespace tc {
 
 		// convenience variable template
 		template<class U>
-		static const std::size_t comp_count_v = comp_count<std::remove_cvref_t<U>>::value;
+		static const uint8_t comp_count_v = comp_count<std::remove_cvref_t<U>>::value;
 
 	public:
 		template<class U>
@@ -55,7 +55,7 @@ namespace tc {
 		using T3 = typename std::conditional_t<N >= 3, T, EmptyType>;
 		using T4 = typename std::conditional_t<N >= 4, T, EmptyType>;
 
-		static constexpr std::size_t size = N;
+		static constexpr uint8_t size = N;
 
 		union {
 			struct { T1 x; T2 y; T3 z; T4 w; };
@@ -252,4 +252,3 @@ namespace tc {
 	using bvec3 = tc::vec_base<bool, 3>;
 	using bvec4 = tc::vec_base<bool, 4>;
 }
-

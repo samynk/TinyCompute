@@ -104,6 +104,27 @@ unsigned int KernelRewriter::getGSLDataTypeRank(GLSLDataType type)
 	}
 }
 
+std::optional<std::string> KernelRewriter::getUnqualifiedEnumType(const clang::TemplateArgument& ta) {
+	using namespace clang;
+	llvm::APSInt val = ta.getAsIntegral();
+	QualType T = ta.getIntegralType();
+	llvm::outs() << "Trying to find enums\n";
+	if (const EnumType* ET = T->getAs<EnumType>()) {
+		const EnumDecl* ED = ET->getDecl();
+
+		for (const EnumConstantDecl* E : ED->enumerators()) {
+			if (E->getInitVal() == val) {
+				// Got the exact enumerator
+				llvm::outs() << "Unqualified name: " << E->getName() << "\n";
+				llvm::outs() << "Qualified name:   " << E->getQualifiedNameAsString() << "\n";
+				return E->getName().str();
+			}
+		}
+	}
+	llvm::outs() << "No enum found\n";
+	return {};
+}
+
 
 
 bool KernelRewriter::rewriteBufferBinding(const clang::FieldDecl* FD) {
@@ -173,6 +194,9 @@ bool KernelRewriter::VisitFieldDecl(clang::FieldDecl* pField)
 {
 	if (checkBufferBinding(pField)) {
 		rewriteBufferBinding(pField);
+	}
+	else if (checkImageBinding(pField)) {
+		rewriteImageBinding(pField);
 	}
 	else if (checkUniformField(pField)) {
 		rewriteUniform(pField);
@@ -311,37 +335,53 @@ bool KernelRewriter::rewriteImageBinding(const clang::FieldDecl* FD)
 	QualType elemType;
 	unsigned binding = 0, set = 0;
 
+	FD->dumpColor();
+
 	if (const auto* CTSDecl = dyn_cast<ClassTemplateSpecializationDecl>(
 		TST->getAsRecordDecl())) {
 
 		const auto& Args = CTSDecl->getTemplateArgs();
 		if (Args.size() >= 3) {
 			// Elem type is Arg 0
-			QualType elemType = Args[0].getAsType();
-
-			// binding is Arg 1
-			unsigned binding = 0;
-			if (Args[1].getKind() == clang::TemplateArgument::ArgKind::Integral) {
-				binding = static_cast<unsigned>(Args[1].getAsIntegral().getZExtValue());
-			}
-
-			// set is Arg 2
-			unsigned set = 0;
-			if (Args[2].getKind() == clang::TemplateArgument::ArgKind::Integral) {
-				set = static_cast<unsigned>(Args[2].getAsIntegral().getZExtValue());
-			}
-
-			auto glslElemTypeOpt = glslTypeForElement(elemType);
-			if (!glslElemTypeOpt) {
+			
+			auto imageFormat = getUnqualifiedEnumType(Args[0]);
+			if (!imageFormat) {
 				return true;
 			}
-			std::string glslElemType = *glslElemTypeOpt;
+			llvm::outs() << "Image format value : " << imageFormat.value() << "\n";
+			
+
+			auto dimension = getUnqualifiedEnumType(Args[1]);
+			if (!dimension) {
+				return true;
+			}
+			llvm::outs() << "Dimension value : " << dimension.value() << "\n";
+
+			// binding is Arg 4
+			unsigned binding = 0;
+			if (Args.size() >= 4)
+			{
+				if (Args[3].getKind() == clang::TemplateArgument::ArgKind::Integral) {
+					binding = static_cast<unsigned>(Args[3].getAsIntegral().getZExtValue());
+				}
+			}
+
+			// set is Arg 5
+			unsigned set = 0;
+			if (Args.size() >= 5)
+			{
+				if (Args[4].getKind() == clang::TemplateArgument::ArgKind::Integral) {
+					set = static_cast<unsigned>(Args[4].getAsIntegral().getZExtValue());
+				}
+			}
 
 			std::string varName = FD->getNameAsString();
-			// Build GLSL buffer declaration (SSBO style)
-			std::string glsl = "layout(set = " + std::to_string(set) +
-				", binding = " + std::to_string(binding) + ") buffer " + "_" + varName + "Layout" + " {"
-				+ glslElemType + " " + varName + "[]; }; ";
+			// Build image layout declaration
+			const ImageFormatDescriptor& desc = m_ImageFormats.at(imageFormat.value());
+			std::string glsl = "layout(binding="+ std::to_string(binding) + 
+				"," + desc.imageIdentifier + ") "
+				"uniform " + m_TypePrefix.at(desc.scalar) + "image" + m_DimensionSuffix.at(dimension.value()) +
+				" " + varName + "; ";
 
 			llvm::errs() << "Replacing binding with :\n" << glsl << "\n.";
 
@@ -367,7 +407,7 @@ bool KernelRewriter::checkImageBinding(const clang::FieldDecl* pField)
 	using namespace clang::ast_matchers;
 	auto uniformMatcher = fieldDecl(
 		hasType(qualType(hasDeclaration(
-			classTemplateSpecializationDecl(hasName("Uniform"))
+			classTemplateSpecializationDecl(hasName("ImageBinding"))
 		)))
 	);
 
@@ -443,7 +483,7 @@ void KernelRewriter::castTo(clang::Expr* pExpr, GLSLDataType targetCast)
 	}
 
 	llvm::errs() << "Implicit cast to " << castStr << "\n";
-	pExpr->dump();
+	// pExpr->dump();
 
 	clang::SourceManager& sourceManager = m_pASTContext->getSourceManager();
 	const clang::LangOptions& languageOptions = m_pASTContext->getLangOpts();

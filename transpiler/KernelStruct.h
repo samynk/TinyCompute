@@ -8,13 +8,9 @@
 
 class KernelStruct {
 public:
-	KernelStruct(const clang::CXXRecordDecl* kernelRecord,std::string fileLocation)
+	KernelStruct(const clang::CXXRecordDecl* kernelRecord, std::string fileLocation)
 		:m_Kernel{ kernelRecord }, m_FileLoc{ fileLocation }
 	{
-		
-
-		
-
 		auto unsignedMatcher = varDecl(
 			anyOf(
 				varDecl(hasType(isUnsignedInteger())).bind("unsignedVar"),
@@ -29,11 +25,11 @@ public:
 		return m_Kernel;
 	}
 
-	void rewrite(clang::ASTContext* Ctx) 
+	void rewrite(clang::ASTContext* Ctx)
 	{
-		
 
-		
+
+
 	}
 
 	void exportComputeShader(clang::Rewriter& rewriter, std::string outputDir)
@@ -56,7 +52,7 @@ public:
 		llvm::errs() << "Writing to " << path.string() << "\n";
 		std::filesystem::create_directories(path.parent_path());
 
-		
+
 		std::string shader = "#version 430\n" + computeShader;
 		std::string normalized;
 		normalized = normalizeLineEndings(shader);
@@ -71,7 +67,7 @@ public:
 		}
 	}
 
-	
+
 private:
 	bool validateShader(
 		const std::string& shaderFile,

@@ -10,7 +10,7 @@
 
 int main() {
 	try {
-		ComputeWindow<GameOfLifeWindow> window{ 512,512,"Compute Shader Tutorial" };
+		ComputeWindow<GameOfLifeWindow> window{ 1024,1024,"Compute Shader Tutorial" };
 		window.init();
 		window.renderLoop();
 		window.close();

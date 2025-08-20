@@ -2,7 +2,9 @@
 
 #include "computebackend.hpp"
 #include "kernel_intrinsics.hpp"
+#include "images/ImageFormat.h"
 #include "ComputeShader.h"
+
 
 class GPUBackend : public tc::ComputeBackend<GPUBackend>
 {
@@ -76,8 +78,45 @@ public:
 		std::cout << "Bound buffer to binding=" << Binding << ", set=" << Set << "\n";
 	}
 
-	template<tc::PixelType P>
-	void uploadImageImpl(tc::GPUFormat gpuFormat, tc::BufferResource<P, tc::Dim::D2>& buffer)
+	template<tc::GPUFormat G>
+	struct OpenGLFormatTraits;
+
+	template<>
+	struct OpenGLFormatTraits<tc::GPUFormat::RGBA8> {
+		static constexpr GLuint internalType = GL_RGBA;
+		static constexpr uint8_t NumChannels = 4;
+	};
+
+	template<>
+	struct OpenGLFormatTraits<tc::GPUFormat::R8UI> {
+		static constexpr GLuint internalType = GL_R8UI;
+		static constexpr uint8_t NumChannels = 1;
+	};
+
+	template<tc::PixelType> struct OpenGLExternalTraits;
+
+	template<> struct OpenGLExternalTraits<tc::R8UI> {
+		static constexpr GLenum format = GL_RED_INTEGER;
+		static constexpr GLenum type = GL_UNSIGNED_BYTE;
+		static constexpr int    channels = 1;
+	};
+
+	//template<> struct OpenGLExternalTraits<tc::R8> {
+	//	static constexpr GLenum format = GL_RED;              // UNorm path
+	//	static constexpr GLenum type = GL_UNSIGNED_BYTE;
+	//	static constexpr int    channels = 1;
+	//	static constexpr int    bytesPerPixel = 1;
+	//};
+
+	template<> struct OpenGLExternalTraits<tc::RGBA8> {
+		static constexpr GLenum format = GL_RGBA;
+		static constexpr GLenum type = GL_UNSIGNED_BYTE;
+		static constexpr int    channels = 4;
+		static constexpr int    bytesPerPixel = 4;
+	};
+
+	template<tc::GPUFormat G, tc::PixelType P>
+	void uploadImageImpl( tc::BufferResource<P, tc::Dim::D2>& buffer)
 	{
 		static_assert(P::NumChannels >= 1 && P::NumChannels <= 4,
 			"Pixel NumChannels must be 1..4");
@@ -101,24 +140,17 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 		// Determine the format based on the number of channels
-		GLenum format = GL_RGB;
-		switch (P::NumChannels) {
-		case 1:
-			format = GL_RED;
-			break;
-		case 3:
-			format = GL_RGB;
-			break;
-		case 4:
-			format = GL_RGBA;
-			break;
-		default:
-			throw std::runtime_error("Unsupported number of channels in texture image.");
-		}
+
+		using eFormatTraits = OpenGLExternalTraits <P>;
 
 		// Upload texture data
-		tc::uvec2 dim = buffer.getDimension();
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, dim.x, dim.y, 0, format, GL_UNSIGNED_BYTE, buffer.data());
+		tc::ivec2 dim = buffer.getDimension();
+		glTexImage2D(GL_TEXTURE_2D, 0, 
+			OpenGLFormatTraits<G>::internalType,
+			dim.x, dim.y, 0, 
+			OpenGLExternalTraits<P>::format, OpenGLExternalTraits<P>::type,
+			buffer.data()
+		);
 
 		GLenum error = glGetError();
 		if (error != GL_NO_ERROR)
@@ -126,6 +158,19 @@ public:
 			throw std::runtime_error("OpenGL Error in OpenGLBackend::uploadImageImpl : " + std::to_string(error));
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+
+	template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+	void bindImageImpl(const tc::ImageBinding<G, D, P, B, S>& image)
+	{
+		unsigned int imageID = image.getBufferData()->getSSBO_ID();
+		glBindImageTexture(B, imageID, 0, GL_FALSE, 0, GL_READ_WRITE, OpenGLFormatTraits<G>::internalType);
+		GLenum error = glGetError();
+		if (error != GL_NO_ERROR)
+		{
+			throw std::runtime_error("OpenGL Error in GLImage::bind(): " + std::to_string(error));
+		}
 	}
 
 	template<unsigned Location>

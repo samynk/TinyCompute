@@ -13,8 +13,8 @@ unsigned char* tc::assets::loadImage(const std::string& fileName, unsigned numCh
     if (!data)
         throw std::runtime_error("Failed to load image: " + fileName);
 
-    if (channels != numChannels)
-        throw std::runtime_error("Unexpected channel count: " + std::to_string(channels));
+    //if (channels != numChannels)
+    //   throw std::runtime_error("Unexpected channel count: " + std::to_string(channels));
     return data;
 }
 

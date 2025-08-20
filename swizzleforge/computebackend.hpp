@@ -52,10 +52,16 @@ namespace tc
 			static_cast<Derived*>(this)->bindBufferImpl(buffer);
 		}
 
-		template<tc::GPUFormat format, typename BufferType>
-		void uploadImage(BufferResource<BufferType,tc::Dim::D2>& buffer)
+		template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+		void bindImage(const tc::ImageBinding<G, D, P, B, S> image)
 		{
-			static_cast<Derived*>(this)->uploadImageImpl(format,buffer);
+			static_cast<Derived*>(this)->bindImageImpl(image);
+		}
+
+		template<tc::GPUFormat G, typename P>
+		void uploadImage(BufferResource<P,tc::Dim::D2>& buffer)
+		{
+			static_cast<Derived*>(this)->template uploadImageImpl<G,P>(buffer);
 		}
 
 		template<typename T, unsigned Location>
@@ -110,10 +116,16 @@ namespace tc
 			// no op
 		}
 
-		template<typename BufferType> 
-		void uploadImageImpl(tc::GPUFormat format, tc::BufferResource<BufferType>& buffer)
+		template<tc::GPUFormat G, tc::Dim D, PixelType P, unsigned B, unsigned S>
+		void bindImageImpl(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
+			// no op
+		}
 
+		template<GPUFormat format,typename BufferType> 
+		void uploadImageImpl(tc::BufferResource<BufferType>& buffer)
+		{
+			// no op
 		}
 
 		template<typename T, unsigned Location>

@@ -4,6 +4,8 @@
 #include "GameOfLife.h"
 #include "GL/glew.h"
 
+#include <chrono>
+
 constexpr std::string_view pattern =
 R"(000000000000000000
 000000000000000000
@@ -36,18 +38,18 @@ public:
 	void init(const SurfaceRenderer& renderer);
 	void compute(const SurfaceRenderer& renderer);
 	unsigned int getTextureID() {
-		if (m_pTestImage) {
-			return m_pTestImage->getSSBO_ID();
+		if (m_pImage2) {
+			return m_pImage2->getSSBO_ID();
 		}
 		else {
 			return 0;
 		}
 	}
+	
 private:
 	GameOfLifeKernel m_GameOfLife;
+	tc::BufferResource<tc::R8UI, tc::Dim::D2>* m_pImage1;
+	tc::BufferResource<tc::R8UI, tc::Dim::D2>* m_pImage2;
 
-	tc::BufferResource<tc::uint> m_initDataIn;
-	tc::BufferResource<tc::uint> m_initDataOut;
-
-	tc::BufferResource<tc::RGBA8, tc::Dim::D2>* m_pTestImage;
+	uint32_t m_FrameCount{ 0 };
 };

@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(swizzleforge_tests
     vec_tests.cpp
     transpiler_tests.cpp
-)
+ "pixel_tests.cpp")
 
 target_compile_features(swizzleforge_tests PUBLIC cxx_std_20)
 

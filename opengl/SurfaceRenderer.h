@@ -9,7 +9,7 @@ R"(
 out vec4 FragColor;
 in vec2 TexCoord;
 
-uniform sampler2D screenTexture;
+uniform usampler2D screenTexture;
 
 void main()
 {

@@ -2,8 +2,13 @@
 #include "OpenGLBackend.h"
 #include "ImageLoader.h"
 
+#include "kernel_intrinsics.hpp"
+#include "math/arithmetic.hpp"
+#include "images/ImageFormat.h"
+
+
 GameOfLifeWindow::GameOfLifeWindow(GLuint width, GLuint height)
-	:m_pTestImage{nullptr}
+	:m_pImage1{nullptr},m_pImage2{nullptr}
 {
 
 }
@@ -14,77 +19,42 @@ GameOfLifeWindow::~GameOfLifeWindow()
 
 void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 {
+	m_pImage1 =
+		tc::assets::loadImage<tc::R8UI>("patterns/methuselah.png");
+	m_GameOfLife.inData.attach(m_pImage1);
 
-	tc::uint w = m_GameOfLife.WIDTH;
-	tc::uint h = m_GameOfLife.HEIGHT;
-	tc::uint N = w * h;
-	m_initDataIn = tc::BufferResource<tc::uint>{ N };
-	m_initDataOut = tc::BufferResource<tc::uint>{ N };
-	tc::uint offsetX = 7;
-	tc::uint offsetY = 7;
-	tc::uint pw = 18;
-	tc::uint ph = 18;
-	for (int y = 0; y < ph; ++y) {
-		for (int x = 0; x < pw; ++x) {
-			std::size_t idx = (y+offsetY) * w + x+offsetX;
-			char c = pattern[y * (pw + 1) + x];
-			m_initDataIn[idx] = (c == '1') ? 1 : 0;
-			m_initDataOut[idx] = m_initDataIn[idx];
-		}
-	}
+	tc::ivec2 dim = tc::imageSize(m_GameOfLife.inData);
 
-	m_GameOfLife.inData.attach(&m_initDataIn);
-	m_GameOfLife.outData.attach(&m_initDataOut);
-	m_GameOfLife._printToConsole();
+	m_pImage2 = new tc::BufferResource<tc::R8UI, tc::Dim::D2>{ dim };
+	m_GameOfLife.outData.attach(m_pImage2);	
 
 	GPUBackend gpuBackend;
-	gpuBackend.uploadBuffer(m_initDataIn);
-	gpuBackend.uploadBuffer(m_initDataOut);
-
-	m_GameOfLife._printToConsole();
-	
-	gpuBackend.useKernel(m_GameOfLife);
-	gpuBackend.bindBuffer(m_GameOfLife.inData);
-	gpuBackend.bindBuffer(m_GameOfLife.outData);
-	gpuBackend.bindUniform(m_GameOfLife.WIDTH);
-	gpuBackend.bindUniform(m_GameOfLife.HEIGHT);
-	gpuBackend.execute(m_GameOfLife, m_GameOfLife.globalWorkSize.get());
-
-	gpuBackend.downloadBuffer(m_initDataOut);
-	m_GameOfLife._printToConsole();
-
-	
-	m_pTestImage = 
-		tc::assets::loadImage<tc::RGBA8>("computeshaders/imageprocessing/test/test.png");
-	
-	(*m_pTestImage)[tc::uvec2{ 3, 3 }] = tc::RGBA8{ 255,0,0,255 };
-
-	gpuBackend.uploadImage<tc::GPUFormat::RGBA8>(*m_pTestImage);
-
-	tc::assets::writeImage<tc::RGBA8>("c:/data/output.png", m_pTestImage);
-	std::cout << "dimension: " << m_pTestImage->size();
-
-	tc::ImageBinding<tc::GPUFormat::RGBA8, tc::Dim::D2, tc::RGBA8, 1> image;
-	image.attach(m_pTestImage);
-	tc::uvec4  result = tc::imageRead(image, tc::uvec2{3,3});
-
+	gpuBackend.uploadImage<tc::GPUFormat::R8UI>(*m_pImage1);
+	gpuBackend.uploadImage<tc::GPUFormat::R8UI>(*m_pImage2);
 }
 
 void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
 {
-	tc::CPUBackend backend;
-	// actually do the binding. (corresponds to glBindBufferBase, no-op on cpu, already bound in memory).
-	/*backend.bindBuffer(kern.inData);
-	backend.bindBuffer(kern.outData);*/
+	m_FrameCount++;
+	if (m_FrameCount < 2) {
+		return;
+	}
+	else {
+		GPUBackend gpuBackend;
+		// actually do the binding. (corresponds to glBindBufferBase, no-op on cpu, already bound in memory).
+		gpuBackend.useKernel(m_GameOfLife);
+		gpuBackend.bindImage(m_GameOfLife.inData);
+		gpuBackend.bindImage(m_GameOfLife.outData);
+		tc::ivec2 dim = tc::imageSize(m_GameOfLife.inData);
+		gpuBackend.execute(m_GameOfLife, tc::uvec3{ dim.x,dim.y,1 });
 
-	backend.execute(m_GameOfLife, m_GameOfLife.globalWorkSize.get());
-	// m_GameOfLife._printToConsole();
-	// swap buffer views
-	tc::BufferResource<tc::uint>* oldFrame = m_GameOfLife.inData.getBufferData();
-	tc::BufferResource<tc::uint>* newFrame = m_GameOfLife.outData.getBufferData();
-	m_GameOfLife.inData.attach(newFrame);
-	m_GameOfLife.outData.attach(oldFrame);
+		// m_GameOfLife._printToConsole();
+		// swap buffer views
+		auto oldFrame = m_GameOfLife.inData.getBufferData();
+		auto newFrame = m_GameOfLife.outData.getBufferData();
 
-	
-
+		m_GameOfLife.inData.attach(newFrame);
+		m_GameOfLife.outData.attach(oldFrame);
+		m_FrameCount = 0;
+	}
 }

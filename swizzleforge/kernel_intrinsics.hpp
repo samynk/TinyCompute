@@ -10,7 +10,7 @@
 template<typename K>
 concept KernelEntry = requires(K k)
 {
-    { k.main() } -> std::same_as<void>;
+	{ k.main() } -> std::same_as<void>;
 	{
 		[]() constexpr {
 			return K::fileLocation;
@@ -20,13 +20,13 @@ concept KernelEntry = requires(K k)
 
 template<typename K>
 constexpr bool HasLocalSize = requires(K k) {
-    { k.local_size } -> std::convertible_to<tc::uvec3>;
+	{ k.local_size } -> std::convertible_to<tc::uvec3>;
 };
 
 namespace tc
 {
-    // Thread‑local slot that dispatcher writes before invoking kernel
-    inline thread_local tc::uvec3 gl_GlobalInvocationID(0, 0, 0);
+	// Thread‑local slot that dispatcher writes before invoking kernel
+	inline thread_local tc::uvec3 gl_GlobalInvocationID(0, 0, 0);
 
 	template<typename> struct is_vec_base_impl : std::false_type {};
 
@@ -67,7 +67,7 @@ namespace tc
 	// Dimension 2 --> use uvec2
 	template<>
 	struct DimTraits<tc::Dim::D2> {
-		using IndexType = vec_base<uint, 2>;
+		using IndexType = vec_base<int32_t, 2>;
 
 		static constexpr unsigned product(IndexType dim) {
 			return dim.x * dim.y;
@@ -128,7 +128,7 @@ namespace tc
 		T m_Value;
 	};
 
-	template<typename T, tc::Dim D=tc::Dim::D1>
+	template<typename T, tc::Dim D = tc::Dim::D1>
 	class BufferResource
 	{
 	public:
@@ -143,13 +143,13 @@ namespace tc
 
 		BufferResource(dimType bufferSize)
 			:m_BufferSize(bufferSize),
-			m_Data(Traits::product(bufferSize) )
+			m_Data(Traits::product(bufferSize))
 		{
 		}
 
 		const T& operator[](dimType index) const
 		{
-			return m_Data[Traits::coordinateToIndex(index,m_BufferSize)];
+			return m_Data[Traits::coordinateToIndex(index, m_BufferSize)];
 		}
 
 		T& operator[](dimType index)
@@ -211,7 +211,7 @@ namespace tc
 			return m_pBufferData->size();
 		}
 
-		BufferResource<T>* getBufferData() const{
+		BufferResource<T>* getBufferData() const {
 			return m_pBufferData;
 		}
 
@@ -229,7 +229,15 @@ namespace tc
 		using ChannelType = uint8_t;
 		using VectorType = tc::uvec4;
 		static constexpr uint8_t NumChannels = 4;
-		static inline constexpr uint8_t indices[4] = { 0,1,2,3 };
+		static inline constexpr tc::Channel indices[NumChannels] = { Channel::R, Channel::G, Channel::B, Channel::A };
+	};
+
+	template<>
+	struct GPUFormatTraits<tc::GPUFormat::R8UI> {
+		using ChannelType = uint8_t;
+		using VectorType = tc::uvec4;
+		static constexpr uint8_t NumChannels = 4;
+		static inline constexpr tc::Channel indices[NumChannels] = { Channel::R, Channel::R, Channel::G, Channel::A };
 	};
 
 	template<tc::GPUFormat G, tc::Dim D, tc::PixelType pixType, unsigned Binding, unsigned Set = 0 >
@@ -237,12 +245,12 @@ namespace tc
 	{
 	public:
 		ImageBinding()
-			:m_pBufferData{nullptr}
+			:m_pBufferData{ nullptr }
 		{
 
 		}
 
-		void attach(BufferResource<pixType,D>* pData) {
+		void attach(BufferResource<pixType, D>* pData) {
 			m_pBufferData = pData;
 		}
 
@@ -250,7 +258,7 @@ namespace tc
 			return m_pBufferData->size();
 		}
 
-		BufferResource<pixType,D>* getBufferData() const {
+		BufferResource<pixType, D>* getBufferData() const {
 			return m_pBufferData;
 		}
 
@@ -259,13 +267,14 @@ namespace tc
 		inline static constexpr unsigned BINDING = Binding;
 		inline static constexpr unsigned SET = Set;
 	private:
-		BufferResource<pixType,D>* m_pBufferData;
+		BufferResource<pixType, D>* m_pBufferData;
 	};
 
 	template<class Src, class Dst>
 	struct channel_convert;
 
 	// Identity (no-op)
+	// constrain --> mogelijke types.
 	template<class T>
 	struct channel_convert<T, T> {
 		static constexpr T apply(T v) noexcept { return v; }
@@ -278,27 +287,76 @@ namespace tc
 		}
 	};
 
+	template<Dim D>
+	inline constexpr unsigned dim_count_v =
+		(D == Dim::D1 ? 1u :
+			D == Dim::D2 ? 2u :
+			/*D3*/          3u);
+
+	// Convenience alias for the uv type
+	template<Dim D>
+	using tcVec = tc::vec_base<int32_t, dim_count_v<D>>;
+
+	template <std::size_t N, typename F, std::size_t... Is>
+	constexpr void for_constexpr_impl(F&& f, std::index_sequence<Is...>) {
+		(f(std::integral_constant<std::size_t, Is>{}), ...);
+	}
+
+	template <std::size_t N, typename F>
+	constexpr void for_constexpr(F&& f) {
+		for_constexpr_impl<N>(std::forward<F>(f), std::make_index_sequence<N>{});
+	}
+
 
 	template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
-	auto imageRead(const ImageBinding<G, D, P, B, S>& image, uvec2 uv)
+	auto imageLoad(const ImageBinding<G, D, P, B, S>& image, tcVec<D> texCoord)
 	{
 		using gpuTraits = GPUFormatTraits<G>;
 		auto* buf = image.getBufferData();
 		if (!buf) throw std::runtime_error("imageRead: no buffer attached");
 
-		// leverage BufferResource’s dimensional indexing
-	    P px = (*buf)[uv]; 
+		P px = (*buf)[texCoord];
 		// convert px to gpu format 
 		using T1 = P::ChannelType;
 		using T2 = gpuTraits::ChannelType;
-		
-		channel_convert<T1,T2> converter;
+
+		channel_convert<T1, T2> converter;
 		using resultType = gpuTraits::VectorType;
 		resultType result{};
-		for (uint8_t c = 0; c < gpuTraits::NumChannels; ++c)
-		{
-			result[c] = converter.apply(px[gpuTraits::indices[c]]);
-		}
-		return result;               // map to shader-side texel type
+
+		for_constexpr<gpuTraits::NumChannels>([&](auto i) {
+			constexpr Channel channel = gpuTraits::indices[i];
+			result[i] = converter.apply(px.template get<channel>());
+			});
+
+		return result;
+	}
+
+	template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+	tcVec<D> imageSize(const ImageBinding<G, D, P, B, S>& image)
+	{
+		return image.getBufferData()->getDimension();
+	}
+
+	template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+	void imageStore(
+		const ImageBinding<G, D, P, B, S>& image,
+		tcVec<D> texCoord,
+		typename GPUFormatTraits<G>::VectorType value
+	)
+	{
+		using gpuTraits = GPUFormatTraits<G>;
+		auto* buf = image.getBufferData();
+		if (!buf) throw std::runtime_error("imageStore: no buffer attached");
+
+		using T1 = gpuTraits::ChannelType;
+		using T2 = P::ChannelType;
+
+		channel_convert<T1, T2> converter;
+		auto& pix = (*buf)[texCoord];
+		for_constexpr<gpuTraits::NumChannels>([&](auto i) {
+			constexpr Channel channel = gpuTraits::indices[i];
+			pix.template set<channel>(converter.apply(value[i]));
+			});
 	}
 }
