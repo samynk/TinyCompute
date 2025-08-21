@@ -7,7 +7,7 @@ add_library(ComputeLibOpenGL STATIC
 	"ComputeWindow.h"  
 	"ShaderBuffer.h"   
 	"Compute.h" 
-	"ImageBuffer2D.h" 
+	 
 	"ImageFormat.h"
 	
 	"SurfaceRenderer.cpp"  

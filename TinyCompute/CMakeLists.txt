@@ -1,4 +1,4 @@
-set(SWIZZLEFORGE_SRC
+set(TINYCOMPUTE_SRC
     "vec.hpp"
     "swizzle.hpp"
     "kernel_intrinsics.hpp"
@@ -6,13 +6,13 @@ set(SWIZZLEFORGE_SRC
     "math/arithmetic.hpp"  "images/ImageFormat.h")
 
 add_library(
-    swizzleforge 
+    TinyCompute
     INTERFACE
-        ${SWIZZLEFORGE_SRC}
+        ${TINYCOMPUTE_SRC}
 )
 
 target_include_directories(
-    swizzleforge 
+    TinyCompute 
     INTERFACE 
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

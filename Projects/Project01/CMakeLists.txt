@@ -1,8 +1,9 @@
-﻿add_executable(Project01
+﻿set(ProjectName "Project01")
+add_executable(${ProjectName}
     main.cpp
  "GameOfLife.h" "GameOfLifeWindow.h" "GameOfLifeWindow.cpp")
 
-target_compile_features(Project01 PUBLIC cxx_std_20)
+target_compile_features(${ProjectName} PUBLIC cxx_std_20)
 
 # Source kernel and generated outputs
 set(KERNEL_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/GameOfLife.h)
@@ -19,11 +20,11 @@ file(WRITE ${TRANSPILER_FLAGS_FILE}
   "-fms-extensions\n"
 )
 
-get_target_property(SF_INCLUDE_DIR swizzleforge SOURCE_DIR)
+get_target_property(TC_INCLUDE_DIR TinyCompute SOURCE_DIR)
 # 1) Transpile C++  →  GLSL
 add_custom_command(
     TARGET Project01 
-    COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${SF_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
+    COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${TC_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
     DEPENDS sf_transpile  ${KERNEL_SRC} ${TRANSPILER_FLAGS_FILE}
     COMMENT "Transpiling ${KERNEL_SRC}"
     USES_TERMINAL 
@@ -40,3 +41,4 @@ PUBLIC
 #)
 
 add_dependencies(Project01 sf_transpile ComputeLibOpenGL) 
+set_target_properties(${ProjectName} PROPERTIES FOLDER "03‑Examples")

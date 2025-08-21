@@ -20,11 +20,11 @@ file(WRITE ${TRANSPILER_FLAGS_FILE}
   "-fms-extensions\n"
 )
 
-get_target_property(SF_INCLUDE_DIR swizzleforge SOURCE_DIR)
+get_target_property(TC_INCLUDE_DIR TinyCompute SOURCE_DIR)
 # 1) Transpile C++  →  GLSL
 add_custom_command(
     TARGET ${ProjectName}
-    COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${SF_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
+    COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${TC_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
     DEPENDS sf_transpile  ${KERNEL_SRC} ${TRANSPILER_FLAGS_FILE}
     COMMENT "Transpiling ${KERNEL_SRC}"
     USES_TERMINAL 
