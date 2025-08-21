@@ -1,14 +1,17 @@
 #include "SurfaceRenderer.h"
+#include "OpenGLBackend.h"
+
 #include <vector>
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
 
 
-SurfaceRenderer::SurfaceRenderer(GLuint bindingId, GLuint w, GLuint h)
+
+
+SurfaceRenderer::SurfaceRenderer(GLuint w, GLuint h)
 	:
-	m_FullScreenImage{ bindingId,w,h,GL_READ_ONLY },
-	m_FSTexture{ std::numeric_limits<unsigned int>::max() },
+	m_FullScreenImage{ tc::ivec2{w,h} },
 	m_ProgramID{ 0 },
 	m_VertexArrayObject{ 0 },
 	m_VertexBufferObject{ 0 },
@@ -33,19 +36,9 @@ SurfaceRenderer::~SurfaceRenderer()
 void SurfaceRenderer::init()
 {
 	createShaderProgram();
-	m_FullScreenImage.init();
+	GPUBackend gpu;
+	gpu.uploadImage<tc::GPUFormat::RGBA8>(m_FullScreenImage);
 	setupQuad();
-
-}
-
-void SurfaceRenderer::bindAsCompute() const
-{
-	m_FullScreenImage.bindAsCompute();
-}
-
-void SurfaceRenderer::bindAsCompute(GLuint bindingSlot) const
-{
-	m_FullScreenImage.bindAsCompute(bindingSlot);
 }
 
 void SurfaceRenderer::createShaderProgram()
@@ -96,23 +89,11 @@ void SurfaceRenderer::setupQuad()
 
 void SurfaceRenderer::drawQuadWithTexture()
 {
-	if (std::numeric_limits<unsigned int>::max() == m_FSTexture)
-	{
-		drawQuadWithTexture(m_FullScreenImage.getTextureID());
-	}
-	else {
-		drawQuadWithTexture(m_FSTexture);
-	}
-}
-
-void SurfaceRenderer::drawQuadWithTexture(unsigned int imageID)
-{
-	// Set the texture uniform
 	glUseProgram(m_ProgramID);
 	glUniform1i(m_screenTextureLoc, 0);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, imageID);
+	glBindTexture(GL_TEXTURE_2D, m_FullScreenImage.getSSBO_ID());
 
 	// Draw the quad
 	glBindVertexArray(m_VertexArrayObject);

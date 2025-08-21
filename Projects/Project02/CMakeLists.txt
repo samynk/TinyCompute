@@ -33,6 +33,7 @@ add_custom_command(
 target_link_libraries(${ProjectName}
 PUBLIC
     ComputeLibOpenGL
+    TinyCompute
 )
 
 # Put demo executable next to shaders / assets

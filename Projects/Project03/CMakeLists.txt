@@ -40,6 +40,7 @@ target_link_libraries(${ProjectName}
 PUBLIC
     ComputeLibOpenGL
 	AssetLib
+    TinyCompute
 )
 
 # Put demo executable next to shaders / assets

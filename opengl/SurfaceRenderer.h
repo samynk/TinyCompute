@@ -1,7 +1,9 @@
 #pragma once
 
+#include "GL/glew.h"
 #include <string>
-#include "GLImage.h"
+#include <computebackend.hpp>
+#include <vec.hpp>
 
 const std::string gFragmentShader =
 R"(
@@ -9,7 +11,7 @@ R"(
 out vec4 FragColor;
 in vec2 TexCoord;
 
-uniform usampler2D screenTexture;
+uniform sampler2D screenTexture;
 
 void main()
 {
@@ -36,11 +38,11 @@ class SurfaceRenderer
 {
 
 public:
-	SurfaceRenderer(GLuint bindingId, GLuint width, GLuint height);
+	SurfaceRenderer(GLuint width, GLuint height);
     ~SurfaceRenderer();
 
     // not meant to be copied or moved
-     // Delete copy constructor and copy assignment operator
+    // Delete copy constructor and copy assignment operator
     SurfaceRenderer(const SurfaceRenderer&) = delete;
     SurfaceRenderer& operator=(const SurfaceRenderer&) = delete;
 
@@ -49,12 +51,11 @@ public:
     SurfaceRenderer& operator=(SurfaceRenderer&&) = delete;
 
     void init();
-    void bindAsCompute() const;
-    void bindAsCompute(GLuint bindingSlot) const;
     void drawQuadWithTexture();
-    void drawQuadWithTexture(unsigned int imageID);
-    void setTextureID(unsigned int textureID) {
-        m_FSTexture = textureID;
+
+    tc::BufferResource<tc::RGBA8UI, tc::Dim::D2>* getRenderBuffer() 
+    {
+        return &m_FullScreenImage;
     }
 
     GLuint getWidth() const {
@@ -83,11 +84,7 @@ private:
 
     GLuint m_Width;
     GLuint m_Height;
-
-    // Automatically released.
-    GLImage m_FullScreenImage;
-    // replace full screen image with your own.
-    GLuint m_FSTexture;
+    tc::BufferResource<tc::RGBA8UI, tc::Dim::D2> m_FullScreenImage;
 
     // To release in destructor.
     GLuint m_ProgramID;

@@ -5,7 +5,7 @@
 target_compile_features(swizzleforge_demo PUBLIC cxx_std_20)
 target_link_libraries(
     swizzleforge_demo
-    swizzleforge
+    TinyCompute
 )
 
 set_target_properties(swizzleforge_demo PROPERTIES

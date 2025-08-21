@@ -2,9 +2,7 @@
 
 #include "SurfaceRenderer.h"
 #include "ComputeShader.h"
-#include "GLImage.h"
 #include "Compute.h"
-#include "ShaderBuffer.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -61,7 +59,7 @@ ComputeWindow<C>::ComputeWindow(GLuint width, GLuint height, const std::string& 
 	:m_Width{ width },
 	m_Height{ height },
 	m_Title{ title },
-	m_SurfaceRenderer{ 0, width, height },
+	m_SurfaceRenderer{ width, height },
 	m_pWindow{ nullptr },
 	m_Compute{ width, height},
 	m_VSync{true}
@@ -121,13 +119,8 @@ void ComputeWindow<C>::renderLoop()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		m_Compute.compute(m_SurfaceRenderer);
-		if (m_Compute.getTextureID() != 0)
-		{
-			m_SurfaceRenderer.drawQuadWithTexture(m_Compute.getTextureID());
-		}
-		else {
-			m_SurfaceRenderer.drawQuadWithTexture();
-		}
+		m_SurfaceRenderer.drawQuadWithTexture();
+		
 		showFPS();
 		// Swap buffers and poll IO events
 		glfwSwapBuffers(m_pWindow);

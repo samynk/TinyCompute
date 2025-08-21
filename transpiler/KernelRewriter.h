@@ -74,9 +74,49 @@ private:
 
 	inline static const std::map<std::string, ImageFormatDescriptor> m_ImageFormats =
 	{
-		{"RGBA8",{"rgba8",tc::Scalar::UNORM} },
-		{"R32F", {"r32f",tc::Scalar::FLOAT} },
-		{"R8UI", {"r8ui",tc::Scalar::UINT}}
+		// floating point formats
+		{"RGBA32F", {"rgba32f",tc::Scalar::FLOAT} },
+		{"RGBA16F", {"rgba16f",tc::Scalar::FLOAT}},
+		{"RG32F",{"rg32f",tc::Scalar::FLOAT}},
+		{"RG16F",{"rg16f",tc::Scalar::FLOAT}},
+		{"R11F_G11F_B10F",{"r11f_g11f_b10f",tc::Scalar::FLOAT}},
+		{"R32F",{"r32f",tc::Scalar::FLOAT}},
+		{"R16F",{"r16f",tc::Scalar::FLOAT}},
+		// unorm formats
+		{"RGBA16",{	"rgba16",tc::Scalar::UNORM}},
+		{"RGB10_A2",{"rgb10_a2",tc::Scalar::UNORM}},
+		{"RGBA8",{"rgba8",tc::Scalar::UNORM}},
+		{"RG16",{"rg16",tc::Scalar::UNORM}},
+		{"RG8",{"rg8",tc::Scalar::UNORM}},
+		{"R16",{"r16",tc::Scalar::UNORM}},
+		{"R8",{"r8",tc::Scalar::UNORM}},
+		// signed normal formats
+		{"RGBA16_SNORM",{"rgba16_snorm",tc::Scalar::SNORM}},
+		{"RGBA8_SNORM",{"rgba8_snorm",tc::Scalar::SNORM}},
+		{"RG16_SNORM",{"rg16_snorm",tc::Scalar::SNORM}},
+		{"RG8_SNORM",{"rg8_snorm",tc::Scalar::SNORM}},
+		{"R16_SNORM",{"r16_snorm",tc::Scalar::SNORM}},
+		// unsigned integer formats
+		{"RGBA32UI",{"rgba32ui",tc::Scalar::UINT}},
+		{"RGBA16UI",{"rgba16ui",tc::Scalar::UINT}},
+		{"RGB10_A2UI",{"rgb10_a2ui",tc::Scalar::UINT}},
+		{"RGBA8UI",{"rgba8ui",tc::Scalar::UINT}},
+		{"RG32UI",{"rg32ui",tc::Scalar::UINT}},
+		{"RG16UI",{"rg16ui",tc::Scalar::UINT}},
+		{"RG8UI",{"rg8ui",tc::Scalar::UINT}},
+		{"R32UI",{"r32ui",tc::Scalar::UINT}},
+		{"R16UI",{"r16ui",tc::Scalar::UINT}},
+		{"R8UI", {"r8ui",tc::Scalar::UINT}},
+		//signed integer formats
+		{ "RGBA32I", {"rgba32i",tc::Scalar::INT} },
+		{ "RGBA16I", {"rgba16i",tc::Scalar::INT} },
+		{ "RGBA8I", {"rgba8i",tc::Scalar::INT} },
+		{ "RG32I", {"rg32i",tc::Scalar::INT} },
+		{ "RG16I", {"rg16i",tc::Scalar::INT} },
+		{ "RG8I", {"rg8i",tc::Scalar::INT} },
+		{ "R32I", {"r32i",tc::Scalar::INT} },
+		{ "R16I", {"r16i",tc::Scalar::INT} },
+		{ "R8I", {"r8i",tc::Scalar::INT} }
 	};
 
 	inline static const std::map<std::string, std::string> m_DimensionSuffix =

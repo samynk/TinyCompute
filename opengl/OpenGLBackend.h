@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GL/glew.h"
+
 #include "computebackend.hpp"
 #include "kernel_intrinsics.hpp"
 #include "images/ImageFormat.h"
@@ -33,11 +35,6 @@ public:
 			buffer.data(), 
 			GL_STATIC_DRAW
 		);
-
-		// Bind the SSBO to a specific binding point (e.g., binding point 0)
-		// glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_SSBO_ID);
-
-		// Unbind the buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 
@@ -83,7 +80,7 @@ public:
 
 	template<>
 	struct OpenGLFormatTraits<tc::GPUFormat::RGBA8> {
-		static constexpr GLuint internalType = GL_RGBA;
+		static constexpr GLuint internalType = GL_RGBA8;
 		static constexpr uint8_t NumChannels = 4;
 	};
 
@@ -108,11 +105,18 @@ public:
 	//	static constexpr int    bytesPerPixel = 1;
 	//};
 
-	template<> struct OpenGLExternalTraits<tc::RGBA8> {
+	template<> struct OpenGLExternalTraits<tc::RGBA8UI> {
 		static constexpr GLenum format = GL_RGBA;
 		static constexpr GLenum type = GL_UNSIGNED_BYTE;
 		static constexpr int    channels = 4;
 		static constexpr int    bytesPerPixel = 4;
+	};
+
+	template<> struct OpenGLExternalTraits<tc::RGBA8> {
+		static constexpr GLenum format = GL_RGBA;
+		static constexpr GLenum type = GL_FLOAT;
+		static constexpr int    channels = 4;
+		static constexpr int    bytesPerPixel = 16;
 	};
 
 	template<tc::GPUFormat G, tc::PixelType P>
@@ -165,11 +169,14 @@ public:
 	void bindImageImpl(const tc::ImageBinding<G, D, P, B, S>& image)
 	{
 		unsigned int imageID = image.getBufferData()->getSSBO_ID();
-		glBindImageTexture(B, imageID, 0, GL_FALSE, 0, GL_READ_WRITE, OpenGLFormatTraits<G>::internalType);
+		unsigned int internalType = OpenGLFormatTraits<G>::internalType;
+		uint8_t binding = B;
+		glBindImageTexture(binding, imageID, 0, GL_FALSE, 0, GL_READ_WRITE, internalType);
 		GLenum error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
-			throw std::runtime_error("OpenGL Error in GLImage::bind(): " + std::to_string(error));
+			//throw std::runtime_error("OpenGL Error in GLImage::bind(): " + std::to_string(error));
+			std::cout << "OpenGL Error in GLImage::bind(): " << std::to_string(error);
 		}
 	}
 

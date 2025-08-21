@@ -1,8 +1,6 @@
 
 #include <string>
 
-
-
 #include "vec.hpp"
 #include "images/ImageFormat.h"
 #include <kernel_intrinsics.hpp>

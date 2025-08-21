@@ -18,8 +18,8 @@ TEST(PixelTest, ChannelReadAndWrite)
 	auto* pImageBuffer = new tc::BufferResource<tc::RGB8, tc::Dim::D2>{ tc::ivec2{32,32} };
 	image.attach(pImageBuffer);
 
-	tc::imageStore(image, tc::ivec2{ 2,2 }, tc::uvec4{ 127,250,0,127 });
-	tc::uvec4 color = tc::imageLoad(image, tc::ivec2{ 2,2 });
+	tc::imageStore(image, tc::ivec2{ 2,2 }, tc::vec4{ 127,250,0,127 });
+	tc::vec4 color = tc::imageLoad(image, tc::ivec2{ 2,2 });
 
 	EXPECT_EQ(color.x, 127u);
 	EXPECT_EQ(color.y, 250u);

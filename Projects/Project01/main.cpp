@@ -1,11 +1,11 @@
 #include <iostream>
 #include <vector>
-//#include "vec.hpp"
-#include "../../swizzleforge/vec.hpp"
+#include <string>
+
+#include "vec.hpp"
 #include "ComputeWindow.h"
 #include "GameOfLifeWindow.h"
-#include <string>
-#include <iostream>
+
 
 
 

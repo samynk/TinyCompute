@@ -5,7 +5,8 @@ namespace tc {
 	enum class GPUFormat {
 		R32F,
 		RGBA8,
-		R8UI
+		R8UI,
+		RGB8UI
 	};
 
 	enum class Scalar {
@@ -203,10 +204,13 @@ namespace tc {
 	template<typename P>
 	concept PixelType = is_pixel_specialization_v<P>;
 
-	using R8 = Pixel<uint8_t, 1>;
-	using RA8 = Pixel<uint8_t, 2>;
-	using RGB8 = Pixel<uint8_t, 3>;
-	using RGBA8 = Pixel<uint8_t, 4>;
+	using R8 = Pixel<float, 1>;
+	using RA8 = Pixel<float, 2>;
+	using RGB8 = Pixel<float, 3>;
+	using RGBA8 = Pixel<float, 4>;
 
 	using R8UI = Pixel<uint8_t, 1>;
+	using RA8UI = Pixel<uint8_t, 2>;
+	using RGB8UI = Pixel<uint8_t, 3>;
+	using RGBA8UI = Pixel<uint8_t, 4>;
 }

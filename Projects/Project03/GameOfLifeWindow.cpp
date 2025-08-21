@@ -17,7 +17,7 @@ GameOfLifeWindow::~GameOfLifeWindow()
 {
 }
 
-void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
+void GameOfLifeWindow::init(SurfaceRenderer& renderer)
 {
 	m_pImage1 =
 		tc::assets::loadImage<tc::R8UI>("patterns/methuselah.png");
@@ -31,9 +31,11 @@ void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 	GPUBackend gpuBackend;
 	gpuBackend.uploadImage<tc::GPUFormat::R8UI>(*m_pImage1);
 	gpuBackend.uploadImage<tc::GPUFormat::R8UI>(*m_pImage2);
+
+	m_ConvertKernel.outData.attach(renderer.getRenderBuffer());
 }
 
-void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
+void GameOfLifeWindow::compute(SurfaceRenderer& renderer)
 {
 	m_FrameCount++;
 	if (m_FrameCount < 2) {
@@ -55,6 +57,12 @@ void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
 
 		m_GameOfLife.inData.attach(newFrame);
 		m_GameOfLife.outData.attach(oldFrame);
+		
+		gpuBackend.useKernel(m_ConvertKernel);
+		m_ConvertKernel.inData.attach(newFrame);
+		gpuBackend.bindImage(m_ConvertKernel.inData);
+		gpuBackend.bindImage(m_ConvertKernel.outData);
+		gpuBackend.execute(m_ConvertKernel, tc::uvec3{ dim.x,dim.y,1 });
 		m_FrameCount = 0;
 	}
 }

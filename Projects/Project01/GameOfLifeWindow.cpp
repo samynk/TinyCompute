@@ -56,10 +56,6 @@ void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
 {
 	tc::CPUBackend backend;
-	// actually do the binding. (corresponds to glBindBufferBase, no-op on cpu, already bound in memory).
-	/*backend.bindBuffer(kern.inData);
-	backend.bindBuffer(kern.outData);*/
-
 	backend.execute(m_GameOfLife, m_GameOfLife.globalWorkSize);
 	m_GameOfLife._printToConsole();
 	// swap buffer views
@@ -67,5 +63,4 @@ void GameOfLifeWindow::compute(const SurfaceRenderer& renderer)
 	tc::BufferResource<tc::uint>* newFrame = m_GameOfLife.outData.getBufferData();
 	m_GameOfLife.inData.attach(newFrame);
 	m_GameOfLife.outData.attach(oldFrame);
-
 }

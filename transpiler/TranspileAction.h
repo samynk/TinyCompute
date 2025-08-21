@@ -114,7 +114,7 @@ public:
 			validateKernel(ks);
 		}
 
-		if (!Validator->isValid()) 
+		if (!Validator->isValid())
 		{
 			llvm::errs() << "Validation failed inside kernel; aborting transpilation.\n";
 			return;
@@ -127,30 +127,26 @@ public:
 		const LangOptions& languageOptions = RewriterObj.getLangOpts();
 
 		std::vector<PendingEdit>& pendingEdits = KernelLocator.getPendingEdits();
-		auto rewriter = std::make_unique<KernelRewriter>(m_pASTContext,pendingEdits);
-		for (KernelStruct& ks : foundKernels) 
+		auto rewriter = std::make_unique<KernelRewriter>(m_pASTContext, pendingEdits);
+		for (KernelStruct& ks : foundKernels)
 		{
 			const CXXRecordDecl* kernelStruct = ks.getKernelRecordDecl();
 			rewriter->TraverseDecl(const_cast<CXXRecordDecl*>(kernelStruct));
+			// apply all the edits.
+			std::sort(pendingEdits.begin(), pendingEdits.end(), [](auto& a, auto& b) {
+				return a.m_Range.getBegin() < b.m_Range.getBegin();
+				});
+			for (auto& e : pendingEdits)
+			{
+				e.replace(RewriterObj);
+
+			}
+			llvm::errs() << "Writing kernel to " << m_OutputDir << "\n";
+			ks.exportComputeShader(RewriterObj, m_OutputDir);
+			pendingEdits.clear();
+
 		}
 		llvm::errs() << "All kernels have been rewritten\n";
-
-		// apply all the edits.
-		
-		std::sort(pendingEdits.begin(), pendingEdits.end(), [](auto& a, auto& b) {
-			return a.m_Range.getBegin() < b.m_Range.getBegin();
-			});
-		for (auto& e : pendingEdits)
-		{
-			e.replace(RewriterObj);
-			
-		}
-
-		llvm::errs() << "Applied all the edits\n";
-		for (KernelStruct& ks : foundKernels)
-		{
-			ks.exportComputeShader(RewriterObj, m_OutputDir);
-		}
 	}
 private:
 	std::string m_OutputDir;

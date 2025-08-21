@@ -226,8 +226,8 @@ namespace tc
 
 	template<>
 	struct GPUFormatTraits<tc::GPUFormat::RGBA8> {
-		using ChannelType = uint8_t;
-		using VectorType = tc::uvec4;
+		using ChannelType = float;
+		using VectorType = tc::vec4;
 		static constexpr uint8_t NumChannels = 4;
 		static inline constexpr tc::Channel indices[NumChannels] = { Channel::R, Channel::G, Channel::B, Channel::A };
 	};
@@ -287,6 +287,13 @@ namespace tc
 		}
 	};
 
+	template<>
+	struct channel_convert<float, std::uint8_t> {
+		static constexpr float apply(float v) noexcept {
+			return v*255.0f;
+		}
+	};
+
 	template<Dim D>
 	inline constexpr unsigned dim_count_v =
 		(D == Dim::D1 ? 1u :
@@ -313,7 +320,7 @@ namespace tc
 	{
 		using gpuTraits = GPUFormatTraits<G>;
 		auto* buf = image.getBufferData();
-		if (!buf) throw std::runtime_error("imageRead: no buffer attached");
+		if (!buf) throw std::runtime_error("imageLoad: no buffer attached");
 
 		P px = (*buf)[texCoord];
 		// convert px to gpu format 

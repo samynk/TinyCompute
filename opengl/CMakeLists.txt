@@ -3,16 +3,16 @@ find_package(OpenGL REQUIRED)
 add_library(ComputeLibOpenGL STATIC
     "SurfaceRenderer.h"  
 	"ComputeShader.h" 
-	"GLImage.h" 
+	 
 	"ComputeWindow.h"  
-	"ShaderBuffer.h"   
+	   
 	"Compute.h" 
 	 
-	"ImageFormat.h"
+	
 	
 	"SurfaceRenderer.cpp"  
 	"ComputeShader.cpp"
-	"GLImage.cpp"
+	
  "OpenGLBackend.h")
 
 target_include_directories(ComputeLibOpenGL PUBLIC 
@@ -28,12 +28,10 @@ target_link_libraries(
 		OpenGL::GL 
 		
 	PUBLIC
-		
+		TinyCompute
 		glfw 
 		libglew_static 
 		glm
-	INTERFACE
-		swizzleforge
 ) 
 
  set_target_properties(ComputeLibOpenGL PROPERTIES

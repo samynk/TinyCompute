@@ -10,7 +10,7 @@ template<typename T>
 concept HasCompute = 
     std::constructible_from<T, GLuint, GLuint> 
     && 
-    requires(T obj, const SurfaceRenderer & renderer) {
+    requires(T obj, SurfaceRenderer & renderer) {
         { obj.init(renderer) } -> std::same_as<void>;
         { obj.compute(renderer) } -> std::same_as<void>;
         { obj.getTextureID() }-> std::same_as<unsigned int>;

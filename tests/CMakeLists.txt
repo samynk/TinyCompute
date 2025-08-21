@@ -18,7 +18,7 @@ target_compile_features(swizzleforge_tests PUBLIC cxx_std_20)
 
 target_link_libraries(swizzleforge_tests
         gtest_main
-        swizzleforge   
+       TinyCompute
 )
 
 add_test(NAME SwizzleForgeUnitTests COMMAND swizzleforge_tests)

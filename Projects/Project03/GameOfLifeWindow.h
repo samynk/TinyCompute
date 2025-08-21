@@ -35,8 +35,8 @@ public:
 	GameOfLifeWindow(GLuint width, GLuint height);
 	~GameOfLifeWindow();
 
-	void init(const SurfaceRenderer& renderer);
-	void compute(const SurfaceRenderer& renderer);
+	void init(SurfaceRenderer& renderer);
+	void compute(SurfaceRenderer& renderer);
 	unsigned int getTextureID() {
 		if (m_pImage2) {
 			return m_pImage2->getSSBO_ID();
@@ -50,6 +50,8 @@ private:
 	GameOfLifeKernel m_GameOfLife;
 	tc::BufferResource<tc::R8UI, tc::Dim::D2>* m_pImage1;
 	tc::BufferResource<tc::R8UI, tc::Dim::D2>* m_pImage2;
+
+	ConvertKernel m_ConvertKernel;
 
 	uint32_t m_FrameCount{ 0 };
 };

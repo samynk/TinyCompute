@@ -2,8 +2,8 @@ add_executable(sf_transpile
     transpile_main.cpp
   "KernelValidator.h" "TranspileAction.h" "matchers/LocalSizeCallback.h"  "matchers/KernelLocatorCallback.h"  "callbacks/BindingPointCallback.h" "PendingEdit.h"  "callbacks/CpuMethodCallback.h" "KernelStruct.h" "KernelRewriter.h" "KernelRewriter.cpp" "ImageFormatDescriptor.h")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-target_compile_features(sf_transpile PUBLIC cxx_std_20)
 
+target_compile_features(sf_transpile PUBLIC cxx_std_20)
 target_compile_definitions(sf_transpile PRIVATE NDEBUG _ITERATOR_DEBUG_LEVEL=0)
 
 if (MSVC)
@@ -30,10 +30,9 @@ add_compile_options(-fno-rtti)
 target_link_libraries(
     sf_transpile
     PRIVATE
-    swizzleforge
+    TinyCompute
     clangAST
     clangFrontend
     clangTooling
 )
-# Optional install step if you later want `make install`
 install(TARGETS sf_transpile RUNTIME DESTINATION tools)

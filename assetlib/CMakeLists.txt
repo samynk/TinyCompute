@@ -3,8 +3,7 @@ add_library(AssetLib STATIC
 	"ImageLoader.cpp"
 )
 
-add_library(stb INTERFACE)
-target_link_libraries(AssetLib PUBLIC swizzleforge)
+target_link_libraries(AssetLib PUBLIC TinyCompute)
 target_include_directories(AssetLib PUBLIC 
 	${stb_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
