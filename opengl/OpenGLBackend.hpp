@@ -30,9 +30,9 @@ public:
 
 		// Allocate memory for the SSBO and upload the data
 		glBufferData(
-			GL_SHADER_STORAGE_BUFFER, 
-			buffer.size() * sizeof(BufferType), 
-			buffer.data(), 
+			GL_SHADER_STORAGE_BUFFER,
+			buffer.size() * sizeof(BufferType),
+			buffer.data(),
 			GL_STATIC_DRAW
 		);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -120,16 +120,16 @@ public:
 	};
 
 	template<tc::GPUFormat G, tc::PixelType P>
-	void uploadImageImpl( tc::BufferResource<P, tc::Dim::D2>& buffer)
+	void uploadImageImpl(tc::BufferResource<P, tc::Dim::D2>& buffer)
 	{
 		static_assert(P::NumChannels >= 1 && P::NumChannels <= 4,
 			"Pixel NumChannels must be 1..4");
 		unsigned int bufferID;
-		if ( (bufferID = buffer.getSSBO_ID()) == std::numeric_limits<unsigned int>::max())
+		if ((bufferID = buffer.getSSBO_ID()) == std::numeric_limits<unsigned int>::max())
 		{
 			glGenTextures(1, &bufferID);
 			buffer.setSSBO_ID(bufferID);
-			std::cout << "Generated buffer with id " << bufferID << "\n";	
+			std::cout << "Generated buffer with id " << bufferID << "\n";
 		}
 
 		if (bufferID == 0) {
@@ -149,9 +149,9 @@ public:
 
 		// Upload texture data
 		tc::ivec2 dim = buffer.getDimension();
-		glTexImage2D(GL_TEXTURE_2D, 0, 
+		glTexImage2D(GL_TEXTURE_2D, 0,
 			OpenGLFormatTraits<G>::internalType,
-			dim.x, dim.y, 0, 
+			dim.x, dim.y, 0,
 			OpenGLExternalTraits<P>::format, OpenGLExternalTraits<P>::type,
 			buffer.data()
 		);
@@ -175,29 +175,21 @@ public:
 		GLenum error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
-			//throw std::runtime_error("OpenGL Error in GLImage::bind(): " + std::to_string(error));
-			std::cout << "OpenGL Error in GLImage::bind(): " << std::to_string(error);
+			throw std::runtime_error("OpenGL Error in GLImage::bind(): " + std::to_string(error));
 		}
 	}
 
-	template<unsigned Location>
-	void bindUniformImpl(const tc::Uniform<float, Location>& uniform)
+	template<int Location, typename T>
+	void bindUniformImpl(const tc::Uniform<T, Location>& uniform)
 	{
-		glUniform1f(Location, uniform.get());
-	}
-
-	// Specialization for int
-	template<unsigned Location>
-	void bindUniformImpl(const tc::Uniform<int, Location>& uniform)
-	{
-		glUniform1i(Location, uniform.get());
-	}
-
-	// Specialization for unsigned int
-	template<unsigned Location>
-	void bindUniformImpl(const tc::Uniform<unsigned int, Location>& uniform)
-	{
-		glUniform1ui(Location, uniform.get());
+		if constexpr (std::is_same_v<T, float>)
+			glUniform1f(Location, uniform.get());
+		else if constexpr (std::is_same_v<T, int>)
+			glUniform1i(Location, uniform.get());
+		else if constexpr (std::is_same_v <T, unsigned int>)
+			glUniform1ui(Location, uniform.get());
+		else
+			static_assert(false, "Unsupported uniform type for bindUniformImpl.");
 	}
 
 	template<KernelEntry K>
@@ -230,7 +222,7 @@ private:
 		if (m_CompiledPrograms.find(kernel.fileLocation) == m_CompiledPrograms.end())
 		{
 			std::string fileLoc = std::string(kernel.fileLocation) + ".comp";
-			ComputeShader shader{ fileLoc};
+			ComputeShader shader{ fileLoc };
 			shader.compile();
 			std::string key = kernel.fileLocation;
 			m_CompiledPrograms.insert_or_assign(key, std::move(shader));

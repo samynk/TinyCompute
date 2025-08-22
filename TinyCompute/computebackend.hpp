@@ -64,7 +64,7 @@ namespace tc
 			static_cast<Derived*>(this)->template uploadImageImpl<G,P>(buffer);
 		}
 
-		template<typename T, unsigned Location>
+		template<typename T, int Location>
 		void bindUniform(const tc::Uniform<T, Location>& uniform)
 		{
 			static_cast<Derived*>(this)->bindUniformImpl(uniform);
@@ -128,7 +128,7 @@ namespace tc
 			// no op
 		}
 
-		template<typename T, unsigned Location>
+		template<typename T, int Location>
 		void bindUniformImpl(const tc::Uniform<T, Location>& uniform)
 		{
 			// no op
