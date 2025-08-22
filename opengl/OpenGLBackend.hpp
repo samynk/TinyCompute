@@ -147,11 +147,6 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-		// Determine the format based on the number of channels
-
-		using eFormatTraits = OpenGLExternalTraits <P>;
-
 		// Upload texture data
 		tc::ivec2 dim = buffer.getDimension();
 		glTexImage2D(GL_TEXTURE_2D, 0,
