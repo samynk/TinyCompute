@@ -48,7 +48,7 @@ private:
 	GLuint m_Height;
 	std::string m_Title;
 
-	GLFWwindow* m_pWindow;
+	std::unique_ptr<GLFWwindow, GLFWDeleter> m_pWindow;
 	SurfaceRenderer m_SurfaceRenderer;
 
 	C m_Compute;
@@ -61,8 +61,8 @@ ComputeWindow<C>::ComputeWindow(GLuint width, GLuint height, const std::string& 
 	m_Title{ title },
 	m_SurfaceRenderer{ width, height },
 	m_pWindow{ nullptr },
-	m_Compute{ width, height},
-	m_VSync{true}
+	m_Compute{ width, height },
+	m_VSync{ vsync }
 {
 
 }
@@ -79,17 +79,17 @@ void ComputeWindow<C>::init()
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		
 
-		m_pWindow = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
+
+		m_pWindow.reset(glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr));
 		if (!m_pWindow) {
 			throw std::runtime_error("Failed to create GLFW window.");
 		}
-		glfwMakeContextCurrent(m_pWindow);
-		glfwSwapInterval(m_VSync?1:0);
-		
-		glfwSetWindowUserPointer(m_pWindow, this);
-		
+		glfwMakeContextCurrent(m_pWindow.get());
+		glfwSwapInterval(m_VSync ? 1 : 0);
+
+		glfwSetWindowUserPointer(m_pWindow.get(), this);
+
 		// Initialize GLEW
 		glewExperimental = GL_TRUE; // Needed for core profile
 		GLenum glewStatus = glewInit();
@@ -109,10 +109,10 @@ void ComputeWindow<C>::init()
 template<HasCompute C>
 void ComputeWindow<C>::renderLoop()
 {
-	while (!glfwWindowShouldClose(m_pWindow)) {
+	while (!glfwWindowShouldClose(m_pWindow.get())) {
 		// Input handling
-		if (glfwGetKey(m_pWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(m_pWindow, true);
+		if (glfwGetKey(m_pWindow.get(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+			glfwSetWindowShouldClose(m_pWindow.get(), true);
 
 		// Rendering commands here
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -120,10 +120,10 @@ void ComputeWindow<C>::renderLoop()
 
 		m_Compute.compute(m_SurfaceRenderer);
 		m_SurfaceRenderer.drawQuadWithTexture();
-		
+
 		showFPS();
 		// Swap buffers and poll IO events
-		glfwSwapBuffers(m_pWindow);
+		glfwSwapBuffers(m_pWindow.get());
 		glfwPollEvents();
 	}
 }
@@ -136,12 +136,12 @@ void ComputeWindow<C>::showFPS() {
 	if (delta >= 1.0) { // If last cout was more than 1 sec ago
 		// cout << 1000.0 / double(m_NrOfFrames) << endl;
 
-		uint32_t fps =static_cast<uint32_t>(double(m_NrOfFrames) / delta);
+		uint32_t fps = static_cast<uint32_t>(double(m_NrOfFrames) / delta);
 
 		std::stringstream ss;
 		ss << m_Title << " [" << fps << " FPS]";
 
-		glfwSetWindowTitle(m_pWindow, ss.str().c_str());
+		glfwSetWindowTitle(m_pWindow.get(), ss.str().c_str());
 
 		m_NrOfFrames = 0;
 		m_LastTime = currentTime;
@@ -151,26 +151,26 @@ void ComputeWindow<C>::showFPS() {
 template<HasCompute C>
 void ComputeWindow<C>::close()
 {
-	glfwDestroyWindow(m_pWindow);
+	glfwDestroyWindow(m_pWindow.get());
 	glfwTerminate();
 }
 
 template<HasCompute C>
 bool ComputeWindow<C>::isMovingForward() {
-	return glfwGetKey(m_pWindow, GLFW_KEY_UP) == GLFW_PRESS;
+	return glfwGetKey(m_pWindow.get(), GLFW_KEY_UP) == GLFW_PRESS;
 }
 
 template<HasCompute C>
 bool ComputeWindow<C>::isMovingBack() {
-	return glfwGetKey(m_pWindow, GLFW_KEY_DOWN) == GLFW_PRESS;
+	return glfwGetKey(m_pWindow.get(), GLFW_KEY_DOWN) == GLFW_PRESS;
 }
 
 template<HasCompute C>
 bool ComputeWindow<C>::isMovingLeft() {
-	return glfwGetKey(m_pWindow, GLFW_KEY_LEFT) == GLFW_PRESS;
+	return glfwGetKey(m_pWindow.get(), GLFW_KEY_LEFT) == GLFW_PRESS;
 }
 
 template<HasCompute C>
 bool ComputeWindow<C>::isMovingRight() {
-	return glfwGetKey(m_pWindow, GLFW_KEY_RIGHT) == GLFW_PRESS;
+	return glfwGetKey(m_pWindow.get(), GLFW_KEY_RIGHT) == GLFW_PRESS;
 }
