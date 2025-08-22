@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <cassert>
+#include <algorithm>
 
 template<unsigned Mask, unsigned Len>
 struct SwizzleMask {

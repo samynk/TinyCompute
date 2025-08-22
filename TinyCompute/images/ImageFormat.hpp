@@ -1,5 +1,7 @@
 #pragma once
-
+#include <limits>
+#include <type_traits>
+#include <array>
 
 namespace tc {
 	enum class GPUFormat {

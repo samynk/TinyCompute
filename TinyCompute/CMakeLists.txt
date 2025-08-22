@@ -3,7 +3,7 @@ set(TINYCOMPUTE_SRC
     "swizzle.hpp"
     "kernel_intrinsics.hpp"
     "computebackend.hpp"
-    "math/arithmetic.hpp"  "images/ImageFormat.h")
+    "math/arithmetic.hpp"  "images/ImageFormat.hpp")
 
 add_library(
     TinyCompute

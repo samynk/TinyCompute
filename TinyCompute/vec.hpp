@@ -3,6 +3,9 @@
 #include <array>
 #include <iostream>
 #include <concepts>
+#include <type_traits>
+#include <cstdint>
+#include <cassert>
 #include "swizzle.hpp"
 
 

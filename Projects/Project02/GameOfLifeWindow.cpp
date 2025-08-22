@@ -12,10 +12,9 @@ GameOfLifeWindow::~GameOfLifeWindow()
 
 void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 {
-
 	tc::uint w = m_GameOfLife.WIDTH;
 	tc::uint h = m_GameOfLife.HEIGHT;
-	tc::uint N = w * h;
+	tc::integer N = w * h;
 	m_initDataIn = tc::BufferResource<tc::uint>{ N };
 	m_initDataOut = tc::BufferResource<tc::uint>{ N };
 	tc::uint offsetX = 7;

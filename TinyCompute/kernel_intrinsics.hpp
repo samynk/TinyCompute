@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include <limits>
 #include <vector>
+#include <concepts>
+#include <string_view>
+#include <stdexcept>
 
 #include "vec.hpp"
 #include "images/ImageFormat.hpp"
@@ -53,7 +56,7 @@ namespace tc
 	// Dimension 1 --> use uint (uint32_t)
 	template<>
 	struct DimTraits<tc::Dim::D1> {
-		using IndexType = tc::uint;
+		using IndexType = int32_t;
 
 		static constexpr unsigned product(IndexType x) {
 			return x;
@@ -81,7 +84,7 @@ namespace tc
 	// Dimension 3 --> use uvec3
 	template<>
 	struct DimTraits<tc::Dim::D3> {
-		using IndexType = vec_base<uint, 3>;
+		using IndexType = vec_base<int32_t, 3>;
 
 		static constexpr unsigned product(IndexType dim) {
 			return dim.x * dim.y * dim.z;
@@ -158,7 +161,7 @@ namespace tc
 		}
 
 
-		unsigned size() const {
+		size_t size() const {
 			return m_Data.size();
 		}
 
@@ -174,7 +177,7 @@ namespace tc
 			m_SSBO_ID = ssbo_id;
 		}
 
-		dimType getDimension() {
+		dimType getDimension() const{
 			return m_BufferSize;
 		}
 	private:
