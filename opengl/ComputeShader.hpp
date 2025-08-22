@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
+#include <array>
 #include "GL/glew.h"
-#include "glm/glm.hpp"
+
+
 
 class ComputeShader
 {
@@ -28,7 +30,5 @@ private:
 	GLuint m_ShaderID = 0;
 	GLuint m_ComputeProgramID = 0;
 	// reasonable default for workgroup sizes.
-	GLuint m_LocalSizeX = 16;
-	GLuint m_LocalSizeY = 16;
-	GLuint m_LocalSizeZ = 1;
+	std::array<GLint, 3>  m_LocalSize = { 16,16,1 };
 };

@@ -3,7 +3,6 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <vector>
 
 ComputeShader::ComputeShader(const std::string& fileLocation) :m_FileLocation{ fileLocation }
 {
@@ -89,7 +88,7 @@ void ComputeShader::compile()
 		glGetShaderiv(m_ShaderID, GL_COMPILE_STATUS, &success);
 		if (!success) {
 			// Retrieve and log the error message
-			std::vector<char> infoLog(1024);
+			std::array<char, 1024> infoLog;
 			glGetShaderInfoLog(m_ShaderID, static_cast<GLsizei>(infoLog.size()), nullptr, infoLog.data());
 			std::string errorMessage(infoLog.begin(), infoLog.end());
 			throw std::runtime_error("ERROR::SHADER::COMPUTE::COMPILATION_FAILED: " + m_FileLocation + "\n"
@@ -104,29 +103,17 @@ void ComputeShader::compile()
 		// Check for linking errors
 		glGetProgramiv(m_ComputeProgramID, GL_LINK_STATUS, &success);
 		if (!success) {
-			std::vector<char> infoLog(1024);
+			std::array<char, 1024> infoLog;
 			glGetProgramInfoLog(m_ComputeProgramID, static_cast<GLsizei>(infoLog.size()), nullptr, infoLog.data());
 			std::string errorMessage(infoLog.begin(), infoLog.end());
 			throw std::runtime_error("ERROR::PROGRAM::COMPUTE::LINKING_FAILED\n" + errorMessage);
 
 		}
-		
-		// Define an array to hold the work group sizes
-		GLint workGroupSize[3];
-
-		// Query the compute shader program for the work group sizes
-		glGetProgramiv(m_ComputeProgramID, GL_COMPUTE_WORK_GROUP_SIZE, workGroupSize);
-
-		m_LocalSizeX = workGroupSize[0];
-		m_LocalSizeY = workGroupSize[1];
-		m_LocalSizeZ = workGroupSize[2];
-
+		glGetProgramiv(m_ComputeProgramID, GL_COMPUTE_WORK_GROUP_SIZE, m_LocalSize.data());
 		// Shader has been linked with the compute program, so it's no longer necessary.
 		glDetachShader(m_ComputeProgramID, m_ShaderID);
 		glDeleteShader(m_ShaderID);
 		m_ShaderID = 0;
-
-		std::cout << "Generated programID " << m_ComputeProgramID << "\n";
 	}
 }
 
