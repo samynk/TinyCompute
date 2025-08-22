@@ -30,7 +30,7 @@ namespace tc
 
 		}
 
-		virtual BackendType GetType() {
+		BackendType GetType() {
 			return m_Backend;
 		}
 
