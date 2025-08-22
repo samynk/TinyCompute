@@ -23,6 +23,11 @@ ComputeShader::ComputeShader(const std::string& fileLocation) :m_FileLocation{ f
 
 ComputeShader::~ComputeShader()
 {
+	clear();
+}
+
+void ComputeShader::clear() 
+{
 	if (m_ShaderID != 0) {
 		glDeleteShader(m_ShaderID);
 		m_ShaderID = 0;
@@ -49,14 +54,7 @@ ComputeShader::ComputeShader(ComputeShader&& other) noexcept
 ComputeShader& ComputeShader::operator=(ComputeShader&& other) noexcept
 {
 	if (this != &other) {
-		// Clean up existing resources
-		if (m_ShaderID != 0) {
-			glDeleteShader(m_ShaderID);
-		}
-		if (m_ComputeProgramID != 0) {
-			glDeleteProgram(m_ComputeProgramID);
-		}
-
+		clear();
 		// Move data
 		m_FileLocation = std::move(other.m_FileLocation);
 		m_SourceValid = other.m_SourceValid;
@@ -77,6 +75,7 @@ void ComputeShader::compile()
 {
 	if (m_SourceValid)
 	{
+		clear();
 		m_ShaderID = glCreateShader(GL_COMPUTE_SHADER);
 		const char* computeShaderSource = m_ShaderContents.c_str();
 

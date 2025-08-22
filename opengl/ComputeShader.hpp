@@ -22,6 +22,7 @@ public:
 	void compile();
 	void use() const;
 private:
+	void clear();
 	std::string m_FileLocation;
 	bool m_SourceValid{ false };
 	std::string m_ShaderContents;
