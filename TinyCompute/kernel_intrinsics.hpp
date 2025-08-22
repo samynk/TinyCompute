@@ -180,7 +180,7 @@ namespace tc
 	private:
 		dimType m_BufferSize;
 		std::vector<T> m_Data;
-		unsigned int m_SSBO_ID{ std::numeric_limits<unsigned int>::max() };
+		unsigned int m_SSBO_ID{ 0 };
 	};
 
 	template<typename T, unsigned Binding, unsigned Set = 0 >

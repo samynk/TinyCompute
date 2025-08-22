@@ -2,10 +2,15 @@
 
 #include "GL/glew.h"
 
+#include "ComputeShader.hpp"
+
 #include "computebackend.hpp"
 #include "kernel_intrinsics.hpp"
 #include "images/ImageFormat.hpp"
-#include "ComputeShader.hpp"
+
+#include <unordered_map>
+#include <cstring> // memcpy
+
 
 
 class GPUBackend : public tc::ComputeBackend<GPUBackend>
@@ -19,7 +24,7 @@ public:
 	template<typename BufferType>
 	void uploadBufferImpl(tc::BufferResource<BufferType>& buffer)
 	{
-		if (buffer.getSSBO_ID() == std::numeric_limits<unsigned int>::max())
+		if (buffer.getSSBO_ID() == 0)
 		{
 			unsigned int bufferID;
 			glGenBuffers(1, &bufferID);
@@ -41,7 +46,7 @@ public:
 	template<typename BufferType>
 	void downloadBufferImpl(tc::BufferResource<BufferType>& buffer)
 	{
-		if (buffer.getSSBO_ID() == std::numeric_limits<unsigned int>::max())
+		if (buffer.getSSBO_ID() == 0)
 		{
 			std::cerr << "Error: Trying to download from an uninitialized buffer.\n";
 			return;
@@ -125,7 +130,7 @@ public:
 		static_assert(P::NumChannels >= 1 && P::NumChannels <= 4,
 			"Pixel NumChannels must be 1..4");
 		unsigned int bufferID;
-		if ((bufferID = buffer.getSSBO_ID()) == std::numeric_limits<unsigned int>::max())
+		if ((bufferID = buffer.getSSBO_ID()) == 0)
 		{
 			glGenTextures(1, &bufferID);
 			buffer.setSSBO_ID(bufferID);
