@@ -86,7 +86,12 @@ namespace tc
 			static_cast<Derived*>(this)->executeImpl(k, totalWork);
 		
 		}
+	protected:
+		tc::uint ceil_div(tc::uint a, tc::uint b) {
+			return a / b + (a % b != 0);
+		}
 	private:
+		
 		BackendType m_Backend;
 	};
 

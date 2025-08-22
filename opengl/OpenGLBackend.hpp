@@ -200,9 +200,10 @@ public:
 	template<KernelEntry K>
 	void executeImpl(K& kernel, const tc::uvec3 globalWorkSize)
 	{
-		GLuint workGroupCountX = globalWorkSize.x / kernel.local_size.x;
-		GLuint workGroupCountY = globalWorkSize.y / kernel.local_size.y;
-		GLuint workGroupCountZ = globalWorkSize.z / kernel.local_size.z;
+		
+		GLuint workGroupCountX = ceil_div(globalWorkSize.x, kernel.local_size.x);
+		GLuint workGroupCountY = ceil_div(globalWorkSize.y, kernel.local_size.y);
+		GLuint workGroupCountZ = ceil_div(globalWorkSize.z, kernel.local_size.z);
 		// Dispatch compute shader
 		glDispatchCompute(workGroupCountX, workGroupCountY, workGroupCountZ);
 		GLenum error = glGetError();
