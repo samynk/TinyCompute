@@ -71,7 +71,7 @@ private:
     void setupQuad();
     GLint m_screenTextureLoc{ 0 };
 
-    float quadVertices[24] = {
+    std::array<float,24> quadVertices = {
         // Positions   // TexCoords
         -1.0f,  1.0f,  0.0f, 0.0f, // Top-left
         -1.0f, -1.0f,  0.0f, 1.0f, // Bottom-left

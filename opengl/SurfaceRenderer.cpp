@@ -31,6 +31,10 @@ SurfaceRenderer::~SurfaceRenderer()
 		glDeleteVertexArrays(1, &m_VertexArrayObject);
 		m_VertexArrayObject = 0;
 	}
+	if (m_VertexBufferObject != 0)
+	{
+		glDeleteBuffers(1, &m_VertexBufferObject);
+	}
 }
 
 void SurfaceRenderer::init()
@@ -74,7 +78,7 @@ void SurfaceRenderer::setupQuad()
 	glBindVertexArray(m_VertexArrayObject);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_VertexBufferObject);
-	glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), &quadVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
 
 	// Position attribute
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
