@@ -1,5 +1,5 @@
-#include "SurfaceRenderer.h"
-#include "OpenGLBackend.h"
+#include "SurfaceRenderer.hpp"
+#include "OpenGLBackend.hpp"
 
 #include <vector>
 #include <stdexcept>

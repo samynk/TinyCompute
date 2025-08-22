@@ -1,5 +1,5 @@
 #include "GameOfLifeWindow.h"
-#include "OpenGLBackend.h"
+#include "OpenGLBackend.hpp"
 
 GameOfLifeWindow::GameOfLifeWindow(GLuint width, GLuint height)
 {

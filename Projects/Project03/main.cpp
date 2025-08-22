@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "vec.hpp"
-#include "ComputeWindow.h"
+#include "ComputeWindow.hpp"
 #include "GameOfLifeWindow.h"
 #include <string>
 #include <iostream>

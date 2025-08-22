@@ -4,8 +4,8 @@
 
 #include "computebackend.hpp"
 #include "kernel_intrinsics.hpp"
-#include "images/ImageFormat.h"
-#include "ComputeShader.h"
+#include "images/ImageFormat.hpp"
+#include "ComputeShader.hpp"
 
 
 class GPUBackend : public tc::ComputeBackend<GPUBackend>
@@ -183,7 +183,6 @@ public:
 	template<unsigned Location>
 	void bindUniformImpl(const tc::Uniform<float, Location>& uniform)
 	{
-
 		glUniform1f(Location, uniform.get());
 	}
 
@@ -191,7 +190,6 @@ public:
 	template<unsigned Location>
 	void bindUniformImpl(const tc::Uniform<int, Location>& uniform)
 	{
-		std::cout << "Setting uniform on location " << Location << ":" << uniform.get() << "\n";
 		glUniform1i(Location, uniform.get());
 	}
 
@@ -199,7 +197,6 @@ public:
 	template<unsigned Location>
 	void bindUniformImpl(const tc::Uniform<unsigned int, Location>& uniform)
 	{
-		std::cout << "Setting uniform on location " << Location << ":" << uniform.get() << "\n";
 		glUniform1ui(Location, uniform.get());
 	}
 

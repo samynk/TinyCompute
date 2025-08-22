@@ -1,10 +1,9 @@
-#include "ComputeShader.h"
+#include "ComputeShader.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-#include <glm/gtc/type_ptr.hpp>
 
 ComputeShader::ComputeShader(const std::string& fileLocation) :m_FileLocation{ fileLocation }
 {

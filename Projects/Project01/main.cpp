@@ -3,7 +3,7 @@
 #include <string>
 
 #include "vec.hpp"
-#include "ComputeWindow.h"
+#include "ComputeWindow.hpp"
 #include "GameOfLifeWindow.h"
 
 

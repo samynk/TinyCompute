@@ -1,8 +1,8 @@
 #pragma once
 
-#include "SurfaceRenderer.h"
-#include "ComputeShader.h"
-#include "Compute.h"
+#include "SurfaceRenderer.hpp"
+#include "ComputeShader.hpp"
+#include "Compute.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

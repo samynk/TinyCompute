@@ -1,6 +1,6 @@
 #pragma once
-#include "SurfaceRenderer.h"
-#include "ComputeShader.h"
+#include "SurfaceRenderer.hpp"
+#include "ComputeShader.hpp"
 #include "GameOfLife.h"
 #include "GL/glew.h"
 

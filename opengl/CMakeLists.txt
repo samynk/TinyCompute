@@ -1,19 +1,12 @@
 find_package(OpenGL REQUIRED)
 
 add_library(ComputeLibOpenGL STATIC
-    "SurfaceRenderer.h"  
-	"ComputeShader.h" 
-	 
-	"ComputeWindow.h"  
-	   
-	"Compute.h" 
-	 
-	
-	
-	"SurfaceRenderer.cpp"  
-	"ComputeShader.cpp"
-	
- "OpenGLBackend.h")
+	"Compute.hpp"     
+	"ComputeShader.hpp" "ComputeShader.cpp"
+	"SurfaceRenderer.hpp"  "SurfaceRenderer.cpp"  
+	"ComputeWindow.hpp"  
+	"OpenGLBackend.hpp"
+)
 
 target_include_directories(ComputeLibOpenGL PUBLIC 
 	${CMAKE_CURRENT_SOURCE_DIR}

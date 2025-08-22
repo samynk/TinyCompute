@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-#include "images/ImageFormat.h"
+#include "images/ImageFormat.hpp"
 
 struct ImageFormatDescriptor{
 	// rgba8, r32, ...

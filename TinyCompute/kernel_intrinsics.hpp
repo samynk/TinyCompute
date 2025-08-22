@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "vec.hpp"
-#include "images/ImageFormat.h"
+#include "images/ImageFormat.hpp"
 // ──────────────────────────────────────────────────────────────
 // 1.  Kernel entry‑point concept
 // ──────────────────────────────────────────────────────────────
@@ -289,8 +289,8 @@ namespace tc
 
 	template<>
 	struct channel_convert<float, std::uint8_t> {
-		static constexpr float apply(float v) noexcept {
-			return v*255.0f;
+		static constexpr uint8_t apply(float v) noexcept {
+			return static_cast<uint8_t>( v*255.0f );
 		}
 	};
 

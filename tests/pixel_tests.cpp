@@ -4,7 +4,7 @@
 #include "vec.hpp"    
 #include "kernel_intrinsics.hpp"
 #include "math/arithmetic.hpp"
-#include "images/ImageFormat.h"
+#include "images/ImageFormat.hpp"
 
 TEST(PixelTest, ChannelReadAndWrite)
 {

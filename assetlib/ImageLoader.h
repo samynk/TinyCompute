@@ -2,7 +2,7 @@
 #include <string>
 
 #include "vec.hpp"
-#include "images/ImageFormat.h"
+#include "images/ImageFormat.hpp"
 #include <kernel_intrinsics.hpp>
 
 namespace tc::assets {

@@ -1,10 +1,10 @@
 #include "GameOfLifeWindow.h"
-#include "OpenGLBackend.h"
+#include "OpenGLBackend.hpp"
 #include "ImageLoader.h"
 
 #include "kernel_intrinsics.hpp"
 #include "math/arithmetic.hpp"
-#include "images/ImageFormat.h"
+#include "images/ImageFormat.hpp"
 
 
 GameOfLifeWindow::GameOfLifeWindow(GLuint width, GLuint height)
