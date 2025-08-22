@@ -14,7 +14,6 @@ int main() {
 		ComputeWindow<GameOfLifeWindow> window{ 512,512,"Compute Shader Tutorial" };
 		window.init();
 		window.renderLoop();
-		window.close();
 	}
 	catch (const std::exception& e) {
 		std::cerr << "An exception occurred: " << e.what() << std::endl;

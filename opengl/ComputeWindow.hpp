@@ -31,7 +31,6 @@ public:
 
 	void init();
 	void renderLoop();
-	void close();
 
 	bool isMovingForward();
 	bool isMovingBack();
@@ -102,7 +101,6 @@ void ComputeWindow<C>::init()
 	}
 	catch (const std::exception& e) {
 		std::cerr << "An exception occurred: " << e.what() << std::endl;
-		close();
 	}
 }
 
@@ -146,13 +144,6 @@ void ComputeWindow<C>::showFPS() {
 		m_NrOfFrames = 0;
 		m_LastTime = currentTime;
 	}
-}
-
-template<HasCompute C>
-void ComputeWindow<C>::close()
-{
-	glfwDestroyWindow(m_pWindow.get());
-	glfwTerminate();
 }
 
 template<HasCompute C>
