@@ -4,6 +4,7 @@
 #include <concepts>
 #include <string_view>
 #include <stdexcept>
+#include <algorithm>
 
 #include "vec.hpp"
 #include "images/ImageFormat.hpp"
@@ -177,7 +178,7 @@ namespace tc
 			m_SSBO_ID = ssbo_id;
 		}
 
-		dimType getDimension() const{
+		dimType getDimension() const {
 			return m_BufferSize;
 		}
 	private:
@@ -293,7 +294,8 @@ namespace tc
 	template<>
 	struct channel_convert<float, std::uint8_t> {
 		static constexpr uint8_t apply(float v) noexcept {
-			return static_cast<uint8_t>( v*255.0f );
+
+			return static_cast<uint8_t>(std::clamp(v, 0.0f, 100.0f) * 255.0f + 0.5f);
 		}
 	};
 
