@@ -53,7 +53,7 @@ namespace tc
 		}
 
 		template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
-		void bindImage(const tc::ImageBinding<G, D, P, B, S> image)
+		void bindImage(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
 			static_cast<Derived*>(this)->bindImageImpl(image);
 		}
