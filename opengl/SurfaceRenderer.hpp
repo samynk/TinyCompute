@@ -4,6 +4,7 @@
 #include <string>
 #include <computebackend.hpp>
 #include <vec.hpp>
+#include <images/ImageFormat.hpp>
 
 const std::string gFragmentShader =
 R"(

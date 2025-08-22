@@ -6,9 +6,6 @@
 #include <fstream>
 #include <sstream>
 
-
-
-
 SurfaceRenderer::SurfaceRenderer(GLuint w, GLuint h)
 	:
 	m_FullScreenImage{ tc::ivec2{w,h} },
