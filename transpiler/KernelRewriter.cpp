@@ -108,21 +108,27 @@ std::optional<std::string> KernelRewriter::getUnqualifiedEnumType(const clang::T
 	using namespace clang;
 	llvm::APSInt val = ta.getAsIntegral();
 	QualType T = ta.getIntegralType();
-	llvm::outs() << "Trying to find enums\n";
 	if (const EnumType* ET = T->getAs<EnumType>()) {
 		const EnumDecl* ED = ET->getDecl();
-
 		for (const EnumConstantDecl* E : ED->enumerators()) {
 			if (E->getInitVal() == val) {
-				// Got the exact enumerator
-				llvm::outs() << "Unqualified name: " << E->getName() << "\n";
-				llvm::outs() << "Qualified name:   " << E->getQualifiedNameAsString() << "\n";
 				return E->getName().str();
 			}
 		}
 	}
-	llvm::outs() << "No enum found\n";
 	return {};
+}
+
+bool KernelRewriter::isInNamespace(const clang::FunctionDecl* FD, llvm::StringRef NS)
+{
+	const clang::DeclContext* DC = FD->getDeclContext();
+	while (DC) {
+		if (auto* ND = llvm::dyn_cast<clang::NamespaceDecl>(DC)) {
+			if (ND->getName() == NS) return true; // handles nested: climb outward
+		}
+		DC = DC->getParent();
+	}
+	return false;
 }
 
 
@@ -169,9 +175,6 @@ bool KernelRewriter::rewriteBufferBinding(const clang::FieldDecl* FD) {
 			std::string glsl = "layout(set = " + std::to_string(set) +
 				", binding = " + std::to_string(binding) + ") buffer " + "_" + varName + "Layout" + " {"
 				+ glslElemType + " " + varName + "[]; }; ";
-
-			llvm::errs() << "Replacing binding with :\n" << glsl << "\n.";
-
 			// Replace the entire field declaration (including initializer)
 			SourceLocation endLoc = Lexer::getLocForEndOfToken(
 				FD->getSourceRange().getEnd(), 0, SM, m_pASTContext->getLangOpts());
@@ -261,13 +264,11 @@ bool KernelRewriter::rewriteUniform(const clang::FieldDecl* FD) {
 			// Elem type is Arg 0
 			QualType elemType = Args[0].getAsType();
 
-			llvm::errs() << "Converting uniform type\n";
 			auto glslElemTypeOpt = glslTypeForElement(elemType);
 			if (!glslElemTypeOpt) {
 				return true;
 			}
 			std::string glslElemType = *glslElemTypeOpt;
-			llvm::errs() << "Type is " << glslElemType << "\n";
 			// binding is Arg 1
 			unsigned location = 0;
 			if (Args[1].getKind() == clang::TemplateArgument::ArgKind::Integral) {
@@ -279,8 +280,6 @@ bool KernelRewriter::rewriteUniform(const clang::FieldDecl* FD) {
 			std::string name = FD->getNameAsString();
 			std::string uniformDecl = "layout(location = " + std::to_string(location) +
 				") uniform " + glslElemType + " " + name + ";";
-
-			llvm::errs() << "Replacing location with :\n" << uniformDecl << "\n.";
 
 			// Replace the entire field declaration (including initializer)
 			SourceLocation endLoc = Lexer::getLocForEndOfToken(
@@ -383,8 +382,6 @@ bool KernelRewriter::rewriteImageBinding(const clang::FieldDecl* FD)
 				"uniform " + m_TypePrefix.at(desc.scalar) + "image" + m_DimensionSuffix.at(dimension.value()) +
 				" " + varName + "; ";
 
-			llvm::errs() << "Replacing binding with :\n" << glsl << "\n.";
-
 			// Replace the entire field declaration (including initializer)
 			SourceLocation endLoc = Lexer::getLocForEndOfToken(
 				FD->getSourceRange().getEnd(), 0, SM, m_pASTContext->getLangOpts());
@@ -436,8 +433,6 @@ bool KernelRewriter::VisitVarDecl(clang::VarDecl* pVar) {
 		if (typeLoc) {
 			clang::SourceRange typeRange = typeLoc->getTypeLoc().getSourceRange();
 			if (typeRange.isValid()) {
-				llvm::errs() << "VisitVarDecl : " << pVar->getNameAsString() << "\n";
-
 				PendingEdit edit{ typeRange, changedType.value() };
 				m_PendingEdits.emplace_back(edit);
 			}
@@ -453,8 +448,6 @@ bool KernelRewriter::VisitDeclRefExpr(clang::DeclRefExpr* pRef)
 	if (ns != nullptr)
 	{
 		if (pRef->getDecl() != nullptr) {
-			llvm::errs() << "DeclRefExpr : " << pRef->getDecl()->getNameAsString() << "\n";
-
 			auto qualifierRange = pRef->getQualifierLoc().getSourceRange();
 			PendingEdit removeNS{ qualifierRange,"" };
 			m_PendingEdits.emplace_back(removeNS);
@@ -482,14 +475,10 @@ void KernelRewriter::castTo(clang::Expr* pExpr, GLSLDataType targetCast)
 	case GLSLDataType::DOUBLE: castStr = "double"; break;
 	}
 
-	llvm::errs() << "Implicit cast to " << castStr << "\n";
-	// pExpr->dump();
-
 	clang::SourceManager& sourceManager = m_pASTContext->getSourceManager();
 	const clang::LangOptions& languageOptions = m_pASTContext->getLangOpts();
 
 	auto exprText = clang::Lexer::getSourceText(clang::CharSourceRange::getTokenRange(sr), sourceManager, languageOptions);
-	llvm::errs() << "Expression text :" << exprText << "\n";
 
 	auto insertBefore = castStr + "( ";
 	auto insertAfter = " )";
@@ -526,10 +515,6 @@ bool KernelRewriter::VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCas
 	unsigned srcRank = getGSLDataTypeRank(src);
 	unsigned toRank = getGSLDataTypeRank(dst);
 
-	/*llvm::errs() << "Warning: Implicit cast from "
-		<< sourceType.getAsString() << " to "
-		<< targetType.getAsString() << "\n";*/
-
 	if (src != dst && ((srcRank > toRank) || src == GLSLDataType::BOOL || dst == GLSLDataType::BOOL))
 	{
 		// Only warn or edit if GLSL would disallow it
@@ -537,6 +522,28 @@ bool KernelRewriter::VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCas
 
 
 			this->castTo(subExpr, dst);  // Surround the subexpression with explicit cast
+		}
+	}
+	return true;
+}
+
+bool KernelRewriter::VisitCallExpr(clang::CallExpr* callExpr)
+{
+	llvm::errs() << "\nCall Expr\n";
+	callExpr->dump();
+	if (auto* functionCall = callExpr->getDirectCallee()) {
+		
+		if ( isInNamespace(functionCall, "tc")) {
+			// Remove just the namespace qualifier "tc::" if it’s present in the source.
+			if (auto* DRE = llvm::dyn_cast<clang::DeclRefExpr>(
+				callExpr->getCallee()->IgnoreParenImpCasts())) {
+				clang::NestedNameSpecifierLoc Q = DRE->getQualifierLoc();
+				if (Q) {
+					PendingEdit edit{ Q.getSourceRange(),""};
+					m_PendingEdits.emplace_back(edit);
+					
+				}
+			}
 		}
 	}
 	return true;
@@ -556,12 +563,9 @@ void KernelRewriter::rewriteVecCtorType(const clang::Expr* E) {
 	using namespace clang;
 	if (auto* TO = dyn_cast<CXXTemporaryObjectExpr>(E->IgnoreParenImpCasts())) {
 		if (auto* TSI = TO->getTypeSourceInfo()) {
-			llvm::errs() << "TSI != null :" << TSI->getType() << "\n ";
 			QualType QT = TSI->getType();
 			if (auto glsl = glslTypeForVecBase(QT)) {
-				llvm::errs() << "glsl type : " << glsl << "\n";
 				TypeLoc TL = TSI->getTypeLoc();
-				llvm::errs() << "adding edit \n";
 				PendingEdit edit{ TL.getSourceRange(),glsl.value()};
 				m_PendingEdits.emplace_back(edit);
 			}
@@ -574,7 +578,7 @@ void KernelRewriter::rewriteVecCtorType(const clang::Expr* E) {
 			QualType QT = TSI->getType();
 			if (auto glsl = glslTypeForVecBase(QT)) {
 				TypeLoc TL = TSI->getTypeLoc();
-				llvm::errs() << "functional cast glsl type : " << glsl << "\n";
+				//llvm::errs() << "functional cast glsl type : " << glsl << "\n";
 				//PendingEdit edit{ TL.getSourceRange(),*glsl };
 				//m_PendingEdits.emplace_back(edit);
 			}
@@ -612,13 +616,10 @@ bool KernelRewriter::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr* E) {
 	using namespace clang;
 	if (E->getOperator() != OO_Subscript) return true;
 
-	llvm::errs() << "found array index\n";
-
 	auto* UDL = dyn_cast<clang::UserDefinedLiteral>(E->getArg(1)->IgnoreParenImpCasts());
 	if (!UDL) return true;
 
 	auto* ID = UDL->getUDSuffix();
-	llvm::errs() << "suffix " << ID->getName() << "\n";
 	if (!ID || ID->getName() != "_sw") return true;
 
 	auto& SM = m_pASTContext->getSourceManager();
@@ -639,7 +640,6 @@ bool KernelRewriter::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr* E) {
 	}
 
 	std::string repl = "." + swizzle;
-	llvm::errs() << "Replacing with " << repl << "\n";
 
 	SourceLocation beginLoc = Lexer::getLocForEndOfToken(
 		E->getArg(0)->getEndLoc(), 0, SM, LO);

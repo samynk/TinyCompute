@@ -1,12 +1,12 @@
 #pragma once
 
 #include "GL/glew.h"
-#include <string>
+#include <string_view>
 #include <computebackend.hpp>
 #include <vec.hpp>
 #include <images/ImageFormat.hpp>
 
-const std::string gFragmentShader =
+inline constexpr std::string_view gFragmentShader =
 R"(
 #version 430 core
 out vec4 FragColor;
@@ -20,7 +20,7 @@ void main()
 }
 )";
 
-const std::string gVertexShader =
+inline constexpr std::string_view gVertexShader =
 R"(
 #version 430 core
 layout (location = 0) in vec2 aPos;
@@ -54,7 +54,7 @@ public:
     void init();
     void drawQuadWithTexture();
 
-    tc::BufferResource<tc::RGBA8UI, tc::Dim::D2>* getRenderBuffer() 
+    tc::BufferResource<tc::cpu::RGBA8UI, tc::Dim::D2>* getRenderBuffer() 
     {
         return &m_FullScreenImage;
     }
@@ -67,7 +67,7 @@ public:
     }
 
 private:
-    GLuint compileShader(const std::string& shaderSource, GLenum shaderType) const;
+    GLuint compileShader(const std::string_view& shaderSource, GLenum shaderType) const;
     void createShaderProgram();
     void setupQuad();
     GLint m_screenTextureLoc{ 0 };
@@ -85,7 +85,7 @@ private:
 
     GLuint m_Width;
     GLuint m_Height;
-    tc::BufferResource<tc::RGBA8UI, tc::Dim::D2> m_FullScreenImage;
+    tc::BufferResource<tc::cpu::RGBA8UI, tc::Dim::D2> m_FullScreenImage;
 
     // To release in destructor.
     GLuint m_ProgramID;

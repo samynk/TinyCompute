@@ -30,7 +30,7 @@ namespace tc
 
 		}
 
-		BackendType GetType() {
+		BackendType getType() const{
 			return m_Backend;
 		}
 
@@ -52,7 +52,7 @@ namespace tc
 			static_cast<Derived*>(this)->bindBufferImpl(buffer);
 		}
 
-		template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+		template<tc::GPUFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
 		void bindImage(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
 			static_cast<Derived*>(this)->bindImageImpl(image);
@@ -121,7 +121,7 @@ namespace tc
 			// no op
 		}
 
-		template<tc::GPUFormat G, tc::Dim D, PixelType P, unsigned B, unsigned S>
+		template<tc::GPUFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
 		void bindImageImpl(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
 			// no op

@@ -229,6 +229,14 @@ namespace tc
 	struct GPUFormatTraits;
 
 	template<>
+	struct GPUFormatTraits<tc::GPUFormat::RGBA32F> {
+		using ChannelType = float;
+		using VectorType = tc::vec4;
+		static constexpr uint8_t NumChannels = 4;
+		static inline constexpr tc::Channel indices[NumChannels] = { Channel::R, Channel::G, Channel::B, Channel::A };
+	};
+
+	template<>
 	struct GPUFormatTraits<tc::GPUFormat::RGBA8> {
 		using ChannelType = float;
 		using VectorType = tc::vec4;
@@ -244,7 +252,7 @@ namespace tc
 		static inline constexpr tc::Channel indices[NumChannels] = { Channel::R, Channel::R, Channel::G, Channel::A };
 	};
 
-	template<tc::GPUFormat G, tc::Dim D, tc::PixelType pixType, unsigned Binding, unsigned Set = 0 >
+	template<tc::GPUFormat G, tc::Dim D, tc::cpu::PixelType pixType, unsigned Binding, unsigned Set = 0 >
 	class ImageBinding
 	{
 	public:
@@ -320,7 +328,7 @@ namespace tc
 	}
 
 
-	template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+	template<tc::GPUFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
 	auto imageLoad(const ImageBinding<G, D, P, B, S>& image, tcVec<D> texCoord)
 	{
 		using gpuTraits = GPUFormatTraits<G>;
@@ -344,13 +352,13 @@ namespace tc
 		return result;
 	}
 
-	template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+	template<tc::GPUFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
 	tcVec<D> imageSize(const ImageBinding<G, D, P, B, S>& image)
 	{
 		return image.getBufferData()->getDimension();
 	}
 
-	template<tc::GPUFormat G, tc::Dim D, tc::PixelType P, unsigned B, unsigned S>
+	template<tc::GPUFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
 	void imageStore(
 		const ImageBinding<G, D, P, B, S>& image,
 		tcVec<D> texCoord,

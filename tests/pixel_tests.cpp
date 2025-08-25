@@ -8,30 +8,30 @@
 
 TEST(PixelTest, ChannelReadAndWrite)
 {
-	tc::Pixel<uint8_t, 1> gray{};
+	tc::cpu::Pixel<uint8_t, 1> gray{};
 	uint8_t alpha = gray.get<tc::Channel::A>();
 
 	EXPECT_EQ(alpha, 255u);
 
-	tc::ImageBinding<tc::GPUFormat::RGBA8, tc::Dim::D2, tc::RGB8, 1> image;
+	tc::ImageBinding<tc::GPUFormat::RGBA8, tc::Dim::D2, tc::cpu::RGB8, 1> image;
 	// vervanging door make_unique
-	auto* pImageBuffer = new tc::BufferResource<tc::RGB8, tc::Dim::D2>{ tc::ivec2{32,32} };
+	auto* pImageBuffer = new tc::BufferResource<tc::cpu::RGB8, tc::Dim::D2>{ tc::ivec2{32,32} };
 	image.attach(pImageBuffer);
 
-	tc::imageStore(image, tc::ivec2{ 2,2 }, tc::vec4{ 127,250,0,127 });
+	tc::imageStore(image, tc::ivec2{ 2,2 }, tc::vec4{ 0.8f,0.71f, 0.24f, 0.5f });
 	tc::vec4 color = tc::imageLoad(image, tc::ivec2{ 2,2 });
 
-	EXPECT_EQ(color.x, 127u);
-	EXPECT_EQ(color.y, 250u);
-	EXPECT_EQ(color.z, 0u);
-	EXPECT_EQ(color.w, 255u);
+	EXPECT_EQ(color.x, 0.8f);
+	EXPECT_EQ(color.y, 0.71f);
+	EXPECT_EQ(color.z, 0.24f);
+	EXPECT_EQ(color.w, 1.0f);
 }
 
 TEST(PixelTest, RWGrayImage)
 {
-	tc::ImageBinding<tc::GPUFormat::R8UI, tc::Dim::D2, tc::R8UI, 1> image;
+	tc::ImageBinding<tc::GPUFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 1> image;
 	// vervanging door make_unique
-	auto* pImageBuffer = new tc::BufferResource<tc::R8UI, tc::Dim::D2>{ tc::ivec2{32,32} };
+	auto* pImageBuffer = new tc::BufferResource<tc::cpu::R8UI, tc::Dim::D2>{ tc::ivec2{32,32} };
 	image.attach(pImageBuffer);
 
 	tc::imageStore(image, tc::ivec2{ 2,2 }, tc::uint{ 127 });

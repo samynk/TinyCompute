@@ -48,8 +48,8 @@ public:
 	
 private:
 	GameOfLifeKernel m_GameOfLife;
-	tc::BufferResource<tc::R8UI, tc::Dim::D2>* m_pImage1;
-	tc::BufferResource<tc::R8UI, tc::Dim::D2>* m_pImage2;
+	tc::BufferResource<tc::cpu::R8UI, tc::Dim::D2>* m_pImage1;
+	tc::BufferResource<tc::cpu::R8UI, tc::Dim::D2>* m_pImage2;
 
 	ConvertKernel m_ConvertKernel;
 

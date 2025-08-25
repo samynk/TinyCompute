@@ -37,7 +37,7 @@ SurfaceRenderer::~SurfaceRenderer()
 void SurfaceRenderer::init()
 {
 	createShaderProgram();
-	GPUBackend gpu;
+	tc::gpu::GPUBackend gpu;
 	gpu.uploadImage<tc::GPUFormat::RGBA8>(m_FullScreenImage);
 	setupQuad();
 }
@@ -102,11 +102,11 @@ void SurfaceRenderer::drawQuadWithTexture()
 	glBindVertexArray(0);
 }
 
-GLuint SurfaceRenderer::compileShader(const std::string& shaderSource, GLenum shaderType) const
+GLuint SurfaceRenderer::compileShader(const std::string_view& shaderSource, GLenum shaderType) const
 {
 	GLuint shaderID = glCreateShader(shaderType);
-	const char* computeShaderSource = shaderSource.c_str();
-	GLint length = shaderSource.length();
+	const char* computeShaderSource = shaderSource.data();
+	GLint length = shaderSource.size();
 
 	glShaderSource(shaderID, 1, &computeShaderSource, &length);
 	glCompileShader(shaderID);

@@ -5,6 +5,7 @@
 
 namespace tc {
 	enum class GPUFormat {
+		RGBA32F,
 		R32F,
 		RGBA8,
 		R8UI,
@@ -44,48 +45,31 @@ namespace tc {
 		DEPTH_STENCIL
 	};
 
-	enum class Channel : std::uint8_t {R,G,B,A};
+	enum class Channel : std::uint8_t { R, G, B, A };
 
 	template<typename T>
 	constexpr T channel_min() noexcept {
-		if constexpr(std::is_floating_point_v<T>) return T(0);
+		if constexpr (std::is_floating_point_v<T>) return T(0);
 		else return std::numeric_limits<T>::min();
 	}
-	
+
 	template<typename T>
 	constexpr T channel_max() noexcept {
 		if constexpr (std::is_floating_point_v<T>) return T(1);
 		else return std::numeric_limits<T>::max();
 	}
+}
 
+namespace tc::cpu {
 	template<typename T, uint8_t N>
 	struct Pixel {
-		struct EmptyType {};
-		using T1 = typename std::conditional_t<N >= 1, T, EmptyType>;
-		using T2 = typename std::conditional_t<N >= 2, T, EmptyType>;
-		using T3 = typename std::conditional_t<N >= 3, T, EmptyType>;
-		using T4 = typename std::conditional_t<N >= 4, T, EmptyType>;
-
-		union {
-			struct { T1 r; T2 g; T3 b; T4 a; };
-			std::array<T, N> data;
-		};
-
-		T operator[](uint32_t idx) const{
-			return data[idx];
-		}
-
-		static constexpr uint8_t NumChannels = N;
-		using ChannelType = T;
+		static_assert(N >= 1 && N <= 4, "Pixel supports channel counts 1..4 only.");
 	};
 
 	template<typename T>
 	struct Pixel<T, 1>
 	{
-		union {
-			T r;
-			std::array<T, 1> data;
-		};
+		T r;
 
 		template<Channel C>
 		constexpr T get() const noexcept
@@ -107,10 +91,7 @@ namespace tc {
 	template<typename T>
 	struct Pixel<T, 2>
 	{
-		union {
-			struct { T r, a; };
-			std::array<T, 2> data;
-		};
+		T r, a;
 
 		template<Channel C>
 		constexpr T get() const noexcept
@@ -133,10 +114,7 @@ namespace tc {
 	template<typename T>
 	struct Pixel<T, 3>
 	{
-		union {
-			struct { T r, g, b; };
-			std::array<T, 3> data;
-		};
+		T r, g, b;
 
 		template<Channel C>
 		constexpr T get() const noexcept
@@ -163,10 +141,7 @@ namespace tc {
 	template<typename T>
 	struct Pixel<T, 4>
 	{
-		union {
-			struct { T r, g, b, a; };
-			std::array<T, 4> data;
-		};
+		T r, g, b, a;
 
 		template<Channel C>
 		constexpr T get() const noexcept

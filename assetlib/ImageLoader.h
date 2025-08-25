@@ -11,7 +11,7 @@ namespace tc::assets {
     
     void freeImage(unsigned char* imgData);
 
-    template<tc::PixelType P>
+    template<tc::cpu::PixelType P>
     tc::BufferResource<P, tc::Dim::D2>* loadImage(const std::string& filename)
     {
         static_assert(P::NumChannels >= 1 && P::NumChannels <= 4,
@@ -30,7 +30,7 @@ namespace tc::assets {
         return buffer;
     }
 
-    template<tc::PixelType P>
+    template<tc::cpu::PixelType P>
     void writeImage(const std::string& filename, 
         tc::BufferResource<P, tc::Dim::D2>* pImage)
     {

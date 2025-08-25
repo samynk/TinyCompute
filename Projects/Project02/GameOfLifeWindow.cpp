@@ -34,7 +34,7 @@ void GameOfLifeWindow::init(const SurfaceRenderer& renderer)
 	m_GameOfLife.outData.attach(&m_initDataOut);
 	m_GameOfLife._printToConsole();
 
-	GPUBackend gpuBackend;
+	tc::gpu::GPUBackend gpuBackend;
 	gpuBackend.uploadBuffer(m_initDataIn);
 	gpuBackend.uploadBuffer(m_initDataOut);
 

@@ -11,7 +11,7 @@
 
 namespace tc {
 	// concepts
-	template<std::size_t N>
+	template<uint8_t N>
 	concept VecSize = (N == 2 || N == 3 || N == 4);
 
 	template<typename T>
@@ -40,7 +40,7 @@ namespace tc {
 		// scalar types are not vecs
 		template<class IT> struct is_vec : std::false_type {};
 		// vec_base are vecs
-		template<class IT, std::size_t IN> struct is_vec<tc::vec_base<IT, IN>> : std::true_type {};
+		template<class IT, uint8_t IN> struct is_vec<tc::vec_base<IT, IN>> : std::true_type {};
 
 		
 
@@ -78,7 +78,7 @@ namespace tc {
 			requires ((comp_count_v<Args> +...) == N)
 		constexpr explicit vec_base(const Args&... args)
 		{
-			std::size_t cursor = 0;
+			uint8_t cursor = 0;
 			([&]
 				{
 					auto part = flatten_arg<T>(args);
@@ -134,7 +134,7 @@ namespace tc {
 			return os;
 		}
 
-		template<typename IT, std::size_t IN, unsigned Mask, unsigned Len>
+		template<typename IT, uint8_t IN, unsigned Mask, unsigned Len>
 		struct vec_proxy
 		{
 			vec_base<IT, IN>& parent;
@@ -160,7 +160,7 @@ namespace tc {
 			}
 		};
 
-		template<typename IT, std::size_t IN, unsigned Mask>
+		template<typename IT, uint8_t IN, unsigned Mask>
 		struct vec_proxy<IT, IN, Mask, 1>
 		{
 			vec_base<T, N>& parent;
@@ -206,7 +206,7 @@ namespace tc {
 	};
 
 	// dot product ---------------------------------------------------
-	template<typename T, std::size_t N>
+	template<typename T, uint8_t N>
 		requires VecSize<N>&& GLSLFloatType<T>
 	T dot(const vec_base<T, N>& a, const vec_base<T, N>& b)
 	{
@@ -215,43 +215,43 @@ namespace tc {
 		return sum;
 	}
 
-	template<typename T, std::size_t N>
+	template<typename T, uint8_t N>
 		requires VecSize<N>&& std::same_as<T, bool>
 	bool all(const vec_base<T, N>& v) noexcept {
-		for (std::size_t i = 0; i < N; ++i) {
+		for (uint8_t i = 0; i < N; ++i) {
 			if (!v[i]) return false;
 		}
 		return true;
 	}
 
-	template<typename T, std::size_t N>
+	template<typename T, uint8_t N>
 		requires VecSize<N>&& std::same_as<T, bool>
 	bool any(const vec_base<T, N>& v) noexcept {
-		for (std::size_t i = 0; i < N; ++i) {
+		for (uint8_t i = 0; i < N; ++i) {
 			if (v[i]) return true;
 		}
 		return false;
 	}
 
-	using vec2 = tc::vec_base<float, 2>;
-	using vec3 = tc::vec_base<float, 3>;
-	using vec4 = tc::vec_base<float, 4>;
+	using vec2 = tc::vec_base<float, 2u>;
+	using vec3 = tc::vec_base<float, 3u>;
+	using vec4 = tc::vec_base<float, 4u>;
 
-	using dvec2 = tc::vec_base<double, 2>;
-	using dvec3 = tc::vec_base<double, 3>;
-	using dvec4 = tc::vec_base<double, 4>;
+	using dvec2 = tc::vec_base<double, 2u>;
+	using dvec3 = tc::vec_base<double, 3u>;
+	using dvec4 = tc::vec_base<double, 4u>;
 
 	using integer = std::int32_t;
-	using ivec2 = tc::vec_base<std::int32_t, 2>;
-	using ivec3 = tc::vec_base<std::int32_t, 3>;
-	using ivec4 = tc::vec_base<std::int32_t, 4>;
+	using ivec2 = tc::vec_base<std::int32_t, 2u>;
+	using ivec3 = tc::vec_base<std::int32_t, 3u>;
+	using ivec4 = tc::vec_base<std::int32_t, 4u>;
 
 	using uint = std::uint32_t;
-	using uvec2 = tc::vec_base<std::uint32_t, 2>;
-	using uvec3 = tc::vec_base<std::uint32_t, 3>;
-	using uvec4 = tc::vec_base<std::uint32_t, 4>;
+	using uvec2 = tc::vec_base<std::uint32_t, 2u>;
+	using uvec3 = tc::vec_base<std::uint32_t, 3u>;
+	using uvec4 = tc::vec_base<std::uint32_t, 4u>;
 
-	using bvec2 = tc::vec_base<bool, 2>;
-	using bvec3 = tc::vec_base<bool, 3>;
-	using bvec4 = tc::vec_base<bool, 4>;
+	using bvec2 = tc::vec_base<bool, 2u>;
+	using bvec3 = tc::vec_base<bool, 3u>;
+	using bvec4 = tc::vec_base<bool, 4u>;
 }

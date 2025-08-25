@@ -3,6 +3,7 @@
 #
 #include "vec.hpp"    
 #include "math/arithmetic.hpp"
+#include "math/linearalgebra.hpp"
 #include "swizzle.hpp"
 
 // 1. Construction & equality --------------------------------------------------
@@ -71,4 +72,15 @@ TEST(VecMath, DotProduct)
 
     float d = tc::dot(a, b);               // 1*4 + 2*5 + 3*6 = 32
     EXPECT_FLOAT_EQ(d, 32.0f);
+}
+
+TEST(VecMath, Normalize)
+{
+    tc::vec3 a{ 3,4,5 };
+    tc::vec3 n = tc::normalize(a);
+
+    float l = sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+    EXPECT_EQ(n.x, 3 / l) ;
+    EXPECT_EQ(n.y, 4 / l);
+    EXPECT_EQ(n.z, 5 / l);
 }

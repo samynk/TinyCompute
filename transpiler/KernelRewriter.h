@@ -21,6 +21,7 @@ public:
 	bool VisitVarDecl(clang::VarDecl* pVar);
 	bool VisitDeclRefExpr(clang::DeclRefExpr* pRef);
 	bool VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCast);
+	bool VisitCallExpr(clang::CallExpr* callExpr);
 
 	static void focusedDump(const clang::Stmt* S, clang::ASTContext& Ctx);
 
@@ -60,6 +61,7 @@ private:
 	bool rewriteUniform(const clang::FieldDecl* pField);
 
 	std::optional<std::string> getUnqualifiedEnumType(const clang::TemplateArgument& ta);
+	bool isInNamespace(const clang::FunctionDecl* FD, llvm::StringRef NS);
 
 	clang::ASTContext* m_pASTContext;
 	std::vector<PendingEdit>& m_PendingEdits;

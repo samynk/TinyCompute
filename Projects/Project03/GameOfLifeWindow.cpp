@@ -20,15 +20,15 @@ GameOfLifeWindow::~GameOfLifeWindow()
 void GameOfLifeWindow::init(SurfaceRenderer& renderer)
 {
 	m_pImage1 =
-		tc::assets::loadImage<tc::R8UI>("patterns/methuselah.png");
+		tc::assets::loadImage<tc::cpu::R8UI>("patterns/methuselah.png");
 	m_GameOfLife.inData.attach(m_pImage1);
 
 	tc::ivec2 dim = tc::imageSize(m_GameOfLife.inData);
 
-	m_pImage2 = new tc::BufferResource<tc::R8UI, tc::Dim::D2>{ dim };
+	m_pImage2 = new tc::BufferResource<tc::cpu::R8UI, tc::Dim::D2>{ dim };
 	m_GameOfLife.outData.attach(m_pImage2);	
 
-	GPUBackend gpuBackend;
+	tc::gpu::GPUBackend gpuBackend;
 	gpuBackend.uploadImage<tc::GPUFormat::R8UI>(*m_pImage1);
 	gpuBackend.uploadImage<tc::GPUFormat::R8UI>(*m_pImage2);
 
@@ -42,7 +42,7 @@ void GameOfLifeWindow::compute(SurfaceRenderer& renderer)
 		return;
 	}
 	else {
-		GPUBackend gpuBackend;
+		tc::gpu::GPUBackend gpuBackend;
 		// actually do the binding. (corresponds to glBindBufferBase, no-op on cpu, already bound in memory).
 		gpuBackend.useKernel(m_GameOfLife);
 		gpuBackend.bindImage(m_GameOfLife.inData);
