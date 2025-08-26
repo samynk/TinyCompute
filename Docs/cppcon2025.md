@@ -9,29 +9,11 @@ paginate: true
 
 ---
 # Introduction
-``` glsl
-#version 430
 
-layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
-
-layout(binding=0,r8ui) uniform uimage2D inData; 
-layout(binding=1,rgba8) uniform image2D outData; 
-
-void main()
-{
-    uvec2 gId = gl_GlobalInvocationID.xy;
-    ivec2 coordinate = ivec2(gId.x, gId.y);
-
-    if (imageLoad(inData, coordinate).x > 0)
-    {
-        imageStore(outData, coordinate, vec4(34.0f / 255.0f, 177.0f / 255.0f, 76 / 255.0f, 1.0f));
-    }
-    else
-    {
-        imageStore(outData, coordinate, vec4(0, 0, 0, 1.0f));
-    }
-}
-```
+* Koen Samyn
+   * Program coordinator Game Development at Digital Arts and Entertainment (Belgium)
+   * Programming generalist 
+   * Educator : C++ / Python / Math / Graphics programming
 ---
 # Why this project?
 * Mental load to develop compute shaders is heavy
@@ -42,3 +24,22 @@ void main()
     * Workgroups / threads
     * Homogeneous parallellism: every thread performs the same task
     * Existing C++ code can be hard to convert
+---
+# Is this new?
+* A lof of movement in this area and existing frameworks
+    * CUDA /HIP
+    * OpenCL
+    * CompuShady (Python)
+* Niche I am trying to fill:
+    * Non-proprietary
+    * Lightweight
+    * Educational focus: teach transferable skills.
+---
+# Design goals
+* Start with C++20 --> no new keywords 
+* Transpile C++ code into GLSL
+* Execution backend for cpu and gpu (OpenGL compute shaders)
+* Make it easier to manage typical gpu resources: buffers, images, uniform variables
+* Debug on CPU -> Test on GPU with a change of backend.
+* Support for swizzle syntax 
+* Compact code 
