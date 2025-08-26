@@ -13,3 +13,4 @@ _deps
 CMakeUserPresets.json
 out
 .vs
+*.pdf
