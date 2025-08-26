@@ -37,11 +37,13 @@ public:
 		return this->WalkUpFromFieldDecl(fieldDec);
 	}
 private:
-	static void dumpDyn(const clang::Expr* E, llvm::StringRef label) {
-		if (!E) { llvm::errs() << label << ": <null>\n"; return; }
-		std::string stmClassName = E->getStmtClassName();
-		llvm::errs() << label << ": " << stmClassName
-			<< "  type=" << E->getType().getAsString() << "\n";
+	static std::string typeNameNoScope(clang::QualType QT,const clang::ASTContext& context) {
+		clang::PrintingPolicy pol(context.getLangOpts());
+		pol.SuppressScope = true;           // <-- kill "ns::"
+		pol.SuppressUnwrittenScope = true;  // drop inline/anon scopes
+		pol.SuppressTagKeyword = true;      // drop "struct/class/enum" prefixes
+	
+		return QT.getAsString(pol);
 	}
 
 	static std::optional<std::string> glslTypeForVecBase(clang::QualType qt);
@@ -60,8 +62,10 @@ private:
 	bool checkUniformField(clang::FieldDecl* pField);
 	bool rewriteUniform(const clang::FieldDecl* pField);
 
+	bool rewriteField(const clang::FieldDecl* pField);
+
 	std::optional<std::string> getUnqualifiedEnumType(const clang::TemplateArgument& ta);
-	bool isInNamespace(const clang::FunctionDecl* FD, llvm::StringRef NS);
+	bool isInNamespace(const clang::NamedDecl* FD, llvm::StringRef NS);
 
 	clang::ASTContext* m_pASTContext;
 	std::vector<PendingEdit>& m_PendingEdits;

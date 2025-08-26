@@ -45,7 +45,6 @@ namespace tc
 	concept VecBase =
 		is_vec_base_impl<std::remove_cvref_t<U>>::value;
 
-	// Now the “either scalar or vector” concept for your Uniform
 	template<typename U>
 	concept UniformValue =
 		GLSLType<std::remove_cvref_t<U>> || VecBase<U>;

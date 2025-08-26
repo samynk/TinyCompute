@@ -119,7 +119,7 @@ std::optional<std::string> KernelRewriter::getUnqualifiedEnumType(const clang::T
 	return {};
 }
 
-bool KernelRewriter::isInNamespace(const clang::FunctionDecl* FD, llvm::StringRef NS)
+bool KernelRewriter::isInNamespace(const clang::NamedDecl* FD, llvm::StringRef NS)
 {
 	const clang::DeclContext* DC = FD->getDeclContext();
 	while (DC) {
@@ -165,10 +165,13 @@ bool KernelRewriter::rewriteBufferBinding(const clang::FieldDecl* FD) {
 			}
 
 			auto glslElemTypeOpt = glslTypeForElement(elemType);
-			if (!glslElemTypeOpt) {
-				return true;
+			std::string glslElemType;
+			if (glslElemTypeOpt) {
+				glslElemType = *glslElemTypeOpt;
 			}
-			std::string glslElemType = *glslElemTypeOpt;
+			else {
+				glslElemType = typeNameNoScope(elemType,*m_pASTContext);
+			}
 
 			std::string varName = FD->getNameAsString();
 			// Build GLSL buffer declaration (SSBO style)
@@ -203,6 +206,10 @@ bool KernelRewriter::VisitFieldDecl(clang::FieldDecl* pField)
 	}
 	else if (checkUniformField(pField)) {
 		rewriteUniform(pField);
+	}
+	else {
+		// remove namespaces of fields.
+		rewriteField(pField);
 	}
 	return true;
 }
@@ -295,6 +302,46 @@ bool KernelRewriter::rewriteUniform(const clang::FieldDecl* FD) {
 	return true;
 }
 
+bool KernelRewriter::rewriteField(const clang::FieldDecl* pField)
+{
+	llvm::errs() << "rewriteField\n";
+	using namespace clang;
+	if (pField->getNameAsString() == "local_size")
+	{
+		return true;
+	}
+	if (auto* TSI = pField->getTypeSourceInfo()) {
+		TypeLoc TL = TSI->getTypeLoc();
+
+		// Many qualified types appear as ElaboratedTypeLoc
+		if (auto ETL = TL.getAs<ElaboratedTypeLoc>()) {
+			if (auto Q = ETL.getQualifierLoc()) {
+				auto QRange = Q.getSourceRange();
+				PendingEdit edit{ QRange, "" };
+				m_PendingEdits.emplace_back(edit);
+				return true;
+			}
+		}
+
+		// Also handle dependent/template spellings that carry a qualifier
+		if (auto DT = TL.getAs<DependentNameTypeLoc>()) {
+			if (auto Q = DT.getQualifierLoc()) {
+				PendingEdit edit{ Q.getSourceRange(), ""};
+				m_PendingEdits.emplace_back(edit);
+				return true;
+			}
+		}
+		if (auto DTS = TL.getAs<DependentTemplateSpecializationTypeLoc>()) {
+			if (auto Q = DTS.getQualifierLoc()) {
+				PendingEdit edit{ Q.getSourceRange(), "" };
+				m_PendingEdits.emplace_back(edit);
+				return true;
+			}
+		}
+	}
+	return true;
+}
+
 
 
 bool KernelRewriter::checkUniformField(clang::FieldDecl* pField) {
@@ -342,20 +389,15 @@ bool KernelRewriter::rewriteImageBinding(const clang::FieldDecl* FD)
 		const auto& Args = CTSDecl->getTemplateArgs();
 		if (Args.size() >= 3) {
 			// Elem type is Arg 0
-			
+
 			auto imageFormat = getUnqualifiedEnumType(Args[0]);
 			if (!imageFormat) {
 				return true;
 			}
-			llvm::outs() << "Image format value : " << imageFormat.value() << "\n";
-			
-
 			auto dimension = getUnqualifiedEnumType(Args[1]);
 			if (!dimension) {
 				return true;
 			}
-			llvm::outs() << "Dimension value : " << dimension.value() << "\n";
-
 			// binding is Arg 4
 			unsigned binding = 0;
 			if (Args.size() >= 4)
@@ -377,7 +419,7 @@ bool KernelRewriter::rewriteImageBinding(const clang::FieldDecl* FD)
 			std::string varName = FD->getNameAsString();
 			// Build image layout declaration
 			const ImageFormatDescriptor& desc = m_ImageFormats.at(imageFormat.value());
-			std::string glsl = "layout(binding="+ std::to_string(binding) + 
+			std::string glsl = "layout(binding=" + std::to_string(binding) +
 				"," + desc.imageIdentifier + ") "
 				"uniform " + m_TypePrefix.at(desc.scalar) + "image" + m_DimensionSuffix.at(dimension.value()) +
 				" " + varName + "; ";
@@ -462,7 +504,7 @@ void KernelRewriter::castTo(clang::Expr* pExpr, GLSLDataType targetCast)
 	{
 		return;
 	}
-	
+
 	clang::SourceRange sr = pExpr->IgnoreParenImpCasts()->getSourceRange();
 
 	// Convert the enum to string
@@ -529,19 +571,19 @@ bool KernelRewriter::VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCas
 
 bool KernelRewriter::VisitCallExpr(clang::CallExpr* callExpr)
 {
-	llvm::errs() << "\nCall Expr\n";
-	callExpr->dump();
+	/*llvm::errs() << "\nCall Expr\n";
+	callExpr->dump();*/
 	if (auto* functionCall = callExpr->getDirectCallee()) {
-		
-		if ( isInNamespace(functionCall, "tc")) {
+
+		if (isInNamespace(functionCall, "tc")) {
 			// Remove just the namespace qualifier "tc::" if it’s present in the source.
 			if (auto* DRE = llvm::dyn_cast<clang::DeclRefExpr>(
 				callExpr->getCallee()->IgnoreParenImpCasts())) {
 				clang::NestedNameSpecifierLoc Q = DRE->getQualifierLoc();
 				if (Q) {
-					PendingEdit edit{ Q.getSourceRange(),""};
+					PendingEdit edit{ Q.getSourceRange(),"" };
 					m_PendingEdits.emplace_back(edit);
-					
+
 				}
 			}
 		}
@@ -566,7 +608,7 @@ void KernelRewriter::rewriteVecCtorType(const clang::Expr* E) {
 			QualType QT = TSI->getType();
 			if (auto glsl = glslTypeForVecBase(QT)) {
 				TypeLoc TL = TSI->getTypeLoc();
-				PendingEdit edit{ TL.getSourceRange(),glsl.value()};
+				PendingEdit edit{ TL.getSourceRange(),glsl.value() };
 				m_PendingEdits.emplace_back(edit);
 			}
 		}
