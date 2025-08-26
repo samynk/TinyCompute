@@ -14,16 +14,27 @@ paginate: true
    * Program coordinator Game Development at Digital Arts and Entertainment (Belgium)
    * Programming generalist 
    * Educator : C++ / Python / Math / Graphics programming
+* Goal: Show how pure C++20 can target GPU compute
+---
+# Contents
+* Rationale behind the project
+* Design goals
+* Workflow with llvm and clang
+* Meta programming
+* Specific GLSL constructs: buffers, images, uniform, swizzles.
+* Demos: Game of Life, Raytracer
 ---
 # Why this project?
 * Mental load to develop compute shaders is heavy
     * Still developing C++ skills.
-    * Management layer needed for gpu resources.
-    * Debugging gpu programs is hard.
+    * Management layer needed for GPU resources.
+    * Debugging GPU programs is hard.
 * Programming model is different 
     * Workgroups / threads
-    * Homogeneous parallellism: every thread performs the same task
+    * Homogeneous parallelism: every thread performs the same task
     * Existing C++ code can be hard to convert
+* Goal
+    * Connect existing C++ skills (threading model) with GPU programming skills.
 ---
 # Is this new?
 * A lof of movement in this area and existing frameworks
