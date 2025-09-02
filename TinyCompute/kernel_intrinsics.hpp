@@ -40,7 +40,7 @@ namespace tc
 		: std::bool_constant< GLSLType<std::remove_cv_t<T>>&& VecSize<N> > {
 	};
 
-	// Concept: true iff the (decayed) type is vec_base<GLSLType, VecSize>
+	// Concept: true if the (decayed) type is vec_base<GLSLType, VecSize>
 	template<typename U>
 	concept VecBase =
 		is_vec_base_impl<std::remove_cvref_t<U>>::value;

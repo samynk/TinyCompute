@@ -39,10 +39,9 @@ namespace tc {
 
 		// scalar types are not vecs
 		template<class IT> struct is_vec : std::false_type {};
+
 		// vec_base are vecs
 		template<class IT, uint8_t IN> struct is_vec<tc::vec_base<IT, IN>> : std::true_type {};
-
-		
 
 		// convenience variable template
 		template<class U>

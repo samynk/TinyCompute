@@ -22,6 +22,7 @@ public:
 	bool VisitDeclRefExpr(clang::DeclRefExpr* pRef);
 	bool VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCast);
 	bool VisitCallExpr(clang::CallExpr* callExpr);
+	bool VisitUsingDirectiveDecl(clang::UsingDirectiveDecl* pUsing);
 
 	static void focusedDump(const clang::Stmt* S, clang::ASTContext& Ctx);
 

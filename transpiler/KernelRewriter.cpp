@@ -170,7 +170,7 @@ bool KernelRewriter::rewriteBufferBinding(const clang::FieldDecl* FD) {
 				glslElemType = *glslElemTypeOpt;
 			}
 			else {
-				glslElemType = typeNameNoScope(elemType,*m_pASTContext);
+				glslElemType = typeNameNoScope(elemType, *m_pASTContext);
 			}
 
 			std::string varName = FD->getNameAsString();
@@ -326,7 +326,7 @@ bool KernelRewriter::rewriteField(const clang::FieldDecl* pField)
 		// Also handle dependent/template spellings that carry a qualifier
 		if (auto DT = TL.getAs<DependentNameTypeLoc>()) {
 			if (auto Q = DT.getQualifierLoc()) {
-				PendingEdit edit{ Q.getSourceRange(), ""};
+				PendingEdit edit{ Q.getSourceRange(), "" };
 				m_PendingEdits.emplace_back(edit);
 				return true;
 			}
@@ -588,6 +588,13 @@ bool KernelRewriter::VisitCallExpr(clang::CallExpr* callExpr)
 			}
 		}
 	}
+	return true;
+}
+
+bool KernelRewriter::VisitUsingDirectiveDecl(clang::UsingDirectiveDecl* pUsing)
+{
+	PendingEdit edit{ pUsing->getSourceRange(), "//",true };
+	m_PendingEdits.emplace_back(edit);
 	return true;
 }
 
