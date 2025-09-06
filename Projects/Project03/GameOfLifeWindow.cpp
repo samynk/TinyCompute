@@ -29,8 +29,8 @@ void GameOfLifeWindow::init(SurfaceRenderer& renderer)
 	m_GameOfLife.outData.attach(m_pImage2);	
 
 	tc::gpu::GPUBackend gpuBackend;
-	gpuBackend.uploadImage<tc::GPUFormat::R8UI>(*m_pImage1);
-	gpuBackend.uploadImage<tc::GPUFormat::R8UI>(*m_pImage2);
+	gpuBackend.uploadImage<tc::InternalFormat::R8UI>(*m_pImage1);
+	gpuBackend.uploadImage<tc::InternalFormat::R8UI>(*m_pImage2);
 
 	m_ConvertKernel.outData.attach(renderer.getRenderBuffer());
 }

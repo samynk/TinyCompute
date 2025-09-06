@@ -66,7 +66,7 @@ struct [[clang::annotate("kernel")]] ConvertKernel
 	tc::uvec3 local_size{ 16, 16, 1 };
 
 	tc::BufferBinding<tc::uint, 0> inData;
-	tc::ImageBinding<tc::GPUFormat::RGBA8, tc::Dim::D2, tc::cpu::RGBA8UI, 1> outData;
+	tc::ImageBinding<tc::InternalFormat::RGBA8, tc::Dim::D2, tc::cpu::RGBA8UI, 1> outData;
 
 	tc::Uniform<tc::integer, 1> width{ 16 };
 	tc::Uniform<tc::integer, 2> height{ 16 };

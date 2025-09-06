@@ -24,7 +24,7 @@ void RayTracerWindow::init(SurfaceRenderer& renderer)
 	tc::gpu::GPUBackend backend;
 	
 	m_pCameraRaysImage = new tc::BufferResource<tc::cpu::RGBA8, tc::Dim::D2>{ dim };
-	backend.uploadImage<tc::GPUFormat::RGBA32F> (*m_pCameraRaysImage);
+	backend.uploadImage<tc::InternalFormat::RGBA32F> (*m_pCameraRaysImage);
 
 	m_RayTracerKernel.outData.attach(m_pCameraRaysImage);
 	m_VisualizeRaysKernel.inData.attach(m_pCameraRaysImage);

@@ -77,23 +77,23 @@ namespace tc::gpu {
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Binding, bufferID);
 		}
 
-		template<tc::GPUFormat G>
+		template<tc::InternalFormat G>
 		struct OpenGLFormatTraits;
 
 		template<>
-		struct OpenGLFormatTraits<tc::GPUFormat::RGBA32F> {
+		struct OpenGLFormatTraits<tc::InternalFormat::RGBA32F> {
 			static constexpr GLuint internalType = GL_RGBA32F;
 			static constexpr uint8_t NumChannels = 4;
 		};
 
 		template<>
-		struct OpenGLFormatTraits<tc::GPUFormat::RGBA8> {
+		struct OpenGLFormatTraits<tc::InternalFormat::RGBA8> {
 			static constexpr GLuint internalType = GL_RGBA8;
 			static constexpr uint8_t NumChannels = 4;
 		};
 
 		template<>
-		struct OpenGLFormatTraits<tc::GPUFormat::R8UI> {
+		struct OpenGLFormatTraits<tc::InternalFormat::R8UI> {
 			static constexpr GLuint internalType = GL_R8UI;
 			static constexpr uint8_t NumChannels = 1;
 		};
@@ -127,7 +127,7 @@ namespace tc::gpu {
 			static constexpr int    bytesPerPixel = 16;
 		};
 
-		template<tc::GPUFormat G, tc::cpu::PixelType P>
+		template<tc::InternalFormat G, tc::cpu::PixelType P>
 		void uploadImageImpl(tc::BufferResource<P, tc::Dim::D2>& buffer)
 		{
 			static_assert(P::NumChannels >= 1 && P::NumChannels <= 4,
@@ -168,7 +168,7 @@ namespace tc::gpu {
 		}
 
 
-		template<tc::GPUFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
+		template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
 		void bindImageImpl(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
 			unsigned int imageID = image.getBufferData()->getSSBO_ID();

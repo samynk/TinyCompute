@@ -38,7 +38,7 @@ void SurfaceRenderer::init()
 {
 	createShaderProgram();
 	tc::gpu::GPUBackend gpu;
-	gpu.uploadImage<tc::GPUFormat::RGBA8>(m_FullScreenImage);
+	gpu.uploadImage<tc::InternalFormat::RGBA8>(m_FullScreenImage);
 	setupQuad();
 }
 

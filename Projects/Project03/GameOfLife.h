@@ -11,8 +11,8 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 	tc::uvec3 local_size{ 16, 16, 1 };
 	// annotated buffers become GLSL SSBOs or UAVs
 
-	tc::ImageBinding<tc::GPUFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 0> inData;
-	tc::ImageBinding<tc::GPUFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 1> outData;
+	tc::ImageBinding<tc::InternalFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 0> inData;
+	tc::ImageBinding<tc::InternalFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 1> outData;
 	//tc::Uniform<tc::uvec3, 0> globalWorkSize{ tc::uvec3{WIDTH,HEIGHT,1} };
 
 	tc::uint sampleGrid(tc::ivec2 c, tc::ivec2 dim)
@@ -57,8 +57,8 @@ struct [[clang::annotate("kernel")]] ConvertKernel
 	static constexpr char fileLocation[] = "convert";
 	tc::uvec3 local_size{ 16, 16, 1 };
 
-	tc::ImageBinding<tc::GPUFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 0> inData;
-	tc::ImageBinding<tc::GPUFormat::RGBA8, tc::Dim::D2, tc::cpu::RGBA8UI, 1> outData;
+	tc::ImageBinding<tc::InternalFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 0> inData;
+	tc::ImageBinding<tc::InternalFormat::RGBA8, tc::Dim::D2, tc::cpu::RGBA8UI, 1> outData;
 
 	void main()
 	{

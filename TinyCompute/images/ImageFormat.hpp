@@ -4,7 +4,7 @@
 #include <array>
 
 namespace tc {
-	enum class GPUFormat {
+	enum class InternalFormat {
 		RGBA32F,
 		R32F,
 		RGBA8,

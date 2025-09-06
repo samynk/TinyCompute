@@ -13,7 +13,7 @@ TEST(PixelTest, ChannelReadAndWrite)
 
 	EXPECT_EQ(alpha, 255u);
 
-	tc::ImageBinding<tc::GPUFormat::RGBA8, tc::Dim::D2, tc::cpu::RGB8, 1> image;
+	tc::ImageBinding<tc::InternalFormat::RGBA8, tc::Dim::D2, tc::cpu::RGB8, 1> image;
 	// vervanging door make_unique
 	auto* pImageBuffer = new tc::BufferResource<tc::cpu::RGB8, tc::Dim::D2>{ tc::ivec2{32,32} };
 	image.attach(pImageBuffer);
@@ -29,7 +29,7 @@ TEST(PixelTest, ChannelReadAndWrite)
 
 TEST(PixelTest, RWGrayImage)
 {
-	tc::ImageBinding<tc::GPUFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 1> image;
+	tc::ImageBinding<tc::InternalFormat::R8UI, tc::Dim::D2, tc::cpu::R8UI, 1> image;
 	// vervanging door make_unique
 	auto* pImageBuffer = new tc::BufferResource<tc::cpu::R8UI, tc::Dim::D2>{ tc::ivec2{32,32} };
 	image.attach(pImageBuffer);

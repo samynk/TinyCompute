@@ -12,7 +12,7 @@ struct [[clang::annotate("kernel")]] RayTracerKernel
 
 	tc::uvec3 local_size{ 16, 16, 1 };
 	// annotated buffers become GLSL SSBOs or UAVs
-	tc::ImageBinding<tc::GPUFormat::RGBA32F, tc::Dim::D2, tc::cpu::RGBA8, 1> outData;
+	tc::ImageBinding<tc::InternalFormat::RGBA32F, tc::Dim::D2, tc::cpu::RGBA8, 1> outData;
 	tc::Uniform<float, 0> fieldOfView{1.73};
 
 	// entry function matches KernelEntry concept
@@ -36,8 +36,8 @@ struct [[clang::annotate("kernel")]] VisualizeRaysKernel
 {
 	static constexpr char fileLocation[] = "visualize_rays";
 	tc::uvec3 local_size{ 16, 16, 1 };
-	tc::ImageBinding<tc::GPUFormat::RGBA32F, tc::Dim::D2, tc::cpu::RGBA8, 0> inData;
-	tc::ImageBinding<tc::GPUFormat::RGBA8, tc::Dim::D2, tc::cpu::RGBA8UI, 1> outData;
+	tc::ImageBinding<tc::InternalFormat::RGBA32F, tc::Dim::D2, tc::cpu::RGBA8, 0> inData;
+	tc::ImageBinding<tc::InternalFormat::RGBA8, tc::Dim::D2, tc::cpu::RGBA8UI, 1> outData;
 
 	void main()
 	{
