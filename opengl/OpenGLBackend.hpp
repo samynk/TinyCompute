@@ -73,11 +73,8 @@ namespace tc::gpu {
 		template<typename T, unsigned Binding, unsigned Set>
 		void bindBufferImpl(const tc::BufferBinding<T, Binding, Set>& buffer)
 		{
-			// This assumes you've already uploaded the data and stored the buffer ID
 			unsigned int bufferID = buffer.getBufferData()->getSSBO_ID();
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Binding, bufferID);
-			// Optional: You could log it
-			std::cout << "Bound buffer to binding=" << Binding << ", set=" << Set << "\n";
 		}
 
 		template<tc::GPUFormat G>

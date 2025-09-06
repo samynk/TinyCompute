@@ -109,10 +109,12 @@ if (SWIZZLEFORGE_BUILD_EXAMPLES)
     add_subdirectory(Projects/Project03)
     add_subdirectory(Projects/Project04)
     add_subdirectory(Projects/Project05)
-	add_subdirectory(Projects/GameOfLife/Step01_QuadrupleFor)
+	add_subdirectory(Projects/FloatAddition)
+    add_subdirectory(Projects/GameOfLife/Step01_QuadrupleFor)
     add_subdirectory(Projects/GameOfLife/Step02_Ranges)
     add_subdirectory(Projects/GameOfLife/Step03_Workgroups)
     add_subdirectory(Projects/GameOfLife/Step04_ComputeShader)
+
 endif()
 
 

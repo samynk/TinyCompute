@@ -1,13 +1,13 @@
-﻿set(ProjectName "GOL_04")
+﻿set(ProjectName "AddFloats")
 add_executable(${ProjectName}
     main.cpp
- "GameOfLife.h" "GameOfLifeWindow.h" "GameOfLifeWindow.cpp")
+ "AddFloats.h" "GameOfLifeWindow.h" "GameOfLifeWindow.cpp")
 
  SET_WORKING_DIR_TO_RESOURCES(${ProjectName})
 target_compile_features(${ProjectName} PUBLIC cxx_std_20)
 
 # Source kernel and generated outputs
-set(KERNEL_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/GameOfLife.h)
+set(KERNEL_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/AddFloats.h)
 set(GLSL_OUT    ${CMAKE_CURRENT_BINARY_DIR})
 set(SPIRV_OUT   ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -49,4 +49,4 @@ PUBLIC
 #)
 
 add_dependencies(${ProjectName} sf_transpile ComputeLibOpenGL) 
-set_target_properties(${ProjectName} PROPERTIES FOLDER "03-Examples/B-GameOfLife")
+set_target_properties(${ProjectName} PROPERTIES FOLDER "03-Examples/A-AddFloats")

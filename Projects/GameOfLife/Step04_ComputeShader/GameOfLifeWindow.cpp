@@ -35,35 +35,38 @@ void GameOfLifeWindow::init(SurfaceRenderer& renderer)
 
 	m_GameOfLife._printToConsole();
 
-	tc::CPUBackend cpu;
-	cpu.useKernel(m_GameOfLife);
-	cpu.bindBuffer(m_GameOfLife.inData);
-	cpu.bindBuffer(m_GameOfLife.outData);
+	tc::gpu::GPUBackend gpu;
+	gpu.uploadBuffer(*m_pDataIn.get());
+	gpu.uploadBuffer(*m_pDataOut.get());
 
-	cpu.execute(m_GameOfLife, tc::uvec3{ m_GameOfLife.width,m_GameOfLife.height,1 });
-	m_GameOfLife._printToConsole();
+	m_ConvertKernel.inData.attach(m_pDataOut.get());
+	m_ConvertKernel.outData.attach(renderer.getRenderBuffer());
 }
 
 void GameOfLifeWindow::compute(SurfaceRenderer& renderer)
 {
+	using Backend = tc::gpu::GPUBackend;
+	Backend b;
+	b.useKernel(m_GameOfLife);
+	b.bindBuffer(m_GameOfLife.inData);
+	b.bindBuffer(m_GameOfLife.outData);
+	b.bindUniform(m_GameOfLife.width);
+	b.bindUniform(m_GameOfLife.height);
+	b.bindUniform(m_GameOfLife.pad);
+	b.execute(m_GameOfLife, tc::uvec3{ m_GameOfLife.width,m_GameOfLife.width,1 });
 
-	tc::CPUBackend cpu;
-	cpu.useKernel(m_GameOfLife);
-	cpu.bindBuffer(m_GameOfLife.inData);
-	cpu.bindBuffer(m_GameOfLife.outData);
-	cpu.bindUniform(m_GameOfLife.width);
-	cpu.bindUniform(m_GameOfLife.height);
-	cpu.bindUniform(m_GameOfLife.pad);
+	b.useKernel(m_ConvertKernel);
+	b.bindBuffer(m_ConvertKernel.inData);
+	b.bindImage(m_ConvertKernel.outData);
+	b.bindUniform(m_ConvertKernel.width);
+	b.bindUniform(m_ConvertKernel.height);
+	b.bindUniform(m_ConvertKernel.pad);
+	b.bindUniform(m_ConvertKernel.scale);
+	int scale = m_ConvertKernel.scale;
+	b.execute(m_ConvertKernel, tc::uvec3{ m_GameOfLife.width*scale,m_GameOfLife.width*scale,1 });
 
-	cpu.execute(m_GameOfLife, tc::uvec3{ m_GameOfLife.width,m_GameOfLife.width,1 });
-
-	// m_GameOfLife._printToConsole();
-	// swap buffer views
-	auto oldFrame = m_GameOfLife.inData.getBufferData();
-	auto newFrame = m_GameOfLife.outData.getBufferData();
-
-	m_GameOfLife.inData.attach(newFrame);
-	m_GameOfLife.outData.attach(oldFrame);
+	using std::swap;
+	swap(m_GameOfLife.inData, m_GameOfLife.outData);
 }
 
 void GameOfLifeWindow::setCellIn(int r, int c)

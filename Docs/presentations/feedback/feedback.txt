@@ -1,0 +1,24 @@
+* game of life --> meer demos
+* slide numbers
+* code : line numbers
+* who am I: photo
+* quadruple for loop : 4 deep nested for loop
+* using index ofwel uitleggen of concreet type
+* std::for_each: iets te rap
+* xi : one dimensional index --> vervangen door iets anders
+* overal curly brace initialization
+* github repo.
+
+* slide 23 --> hoe bereken je globalInvocationID --> terug naar 
+* skippable slides
+
+* duiden wat DAE is : studenten / courses
+
+* binding id moet niet uniek zijn (offset)
+* slang
+
+* text heavy --> images
+
+* tc --> ofwel niet ofwel introduceren.
+
+* slide 19 : visueel ofwel skippen 

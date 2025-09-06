@@ -5,6 +5,7 @@
 #include <string_view>
 #include <stdexcept>
 #include <algorithm>
+#include <random>
 
 #include "vec.hpp"
 #include "images/ImageFormat.hpp"
@@ -180,12 +181,41 @@ namespace tc
 		dimType getDimension() const {
 			return m_BufferSize;
 		}
+
+		void swap(BufferResource& other) noexcept
+		{
+			using std::swap;
+			swap(m_BufferSize, other.m_BufferSize);
+			swap(m_SSBO_ID, other.m_SSBO_ID);
+			swap(m_Data, other.m_Data);
+		}
+
+		friend void swap(BufferResource& a, BufferResource& b) noexcept(noexcept(a.swap(b))) {
+			a.swap(b);
+		}
+
+		void randomize(T min, T max) requires std::is_arithmetic_v<T>{
+			std::mt19937 rng{ std::random_device{}() };
+
+			if constexpr (std::is_integral_v<T>) {
+				std::uniform_int_distribution<T> dist(min, max);
+				std::generate(m_Data.begin(), m_Data.end(),
+					[&]() { return dist(rng); });
+			}
+			else {
+				std::uniform_real_distribution<T> dist(min, max);
+				std::generate(m_Data.begin(), m_Data.end(),
+					[&]() { return dist(rng); });
+			}
+		}
+
 	private:
 		dimType m_BufferSize;
 		std::vector<T> m_Data;
 		unsigned int m_SSBO_ID{ 0 };
 	};
 
+	
 	template<typename T, unsigned Binding, unsigned Set = 0 >
 	class BufferBinding
 	{
@@ -218,10 +248,19 @@ namespace tc
 			return m_pBufferData;
 		}
 
+		template<unsigned B2, unsigned S2>
+		friend void swap(BufferBinding& a, BufferBinding<T, B2, S2>& b) noexcept {
+			using std::swap;
+			swap(*a.getBufferData(), *b.getBufferData());
+		}
+
 		static const unsigned SET = Set;
 		static const unsigned BINDING = Binding;
 	private:
 		BufferResource<T>* m_pBufferData;
+
+		template<typename T, unsigned B1, unsigned S1>
+		friend class BufferBinding;
 	};
 
 	template<tc::GPUFormat G>

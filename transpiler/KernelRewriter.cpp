@@ -561,8 +561,6 @@ bool KernelRewriter::VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCas
 	{
 		// Only warn or edit if GLSL would disallow it
 		if (src != GLSLDataType::OTHER && dst != GLSLDataType::OTHER) {
-
-
 			this->castTo(subExpr, dst);  // Surround the subexpression with explicit cast
 		}
 	}
@@ -681,8 +679,6 @@ bool KernelRewriter::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr* E) {
 	{
 		swizzle = txt.substr(l + 1, r - l - 1).str();
 	}
-
-
 	// extract swizzle string
 	if (swizzle.empty()) {
 		return true;

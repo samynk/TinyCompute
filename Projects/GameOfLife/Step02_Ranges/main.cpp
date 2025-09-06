@@ -40,7 +40,7 @@ namespace GameOfLife
 				}
 			}
 			if (m_Delay > 500) {
-				k.execute();
+				k.dispatch();
 				k.swapBuffers();
 				m_Delay = 0;
 			}

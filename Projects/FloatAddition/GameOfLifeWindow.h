@@ -1,8 +1,8 @@
 #pragma once
 #include "SurfaceRenderer.hpp"
 #include "ComputeShader.hpp"
-#include "GameOfLife.h"
 #include "GL/glew.h"
+#include "AddFloats.h"
 
 class GameOfLifeWindow
 {
@@ -12,14 +12,11 @@ public:
 
 	void init(SurfaceRenderer& renderer);
 	void compute(SurfaceRenderer& renderer);
-	void setCellIn(int r, int c);
-	
 private:
-	GameOfLifeKernel m_GameOfLife;
-	std::unique_ptr<tc::BufferResource<tc::uint>> m_pDataIn;
-	std::unique_ptr<tc::BufferResource<tc::uint>> m_pDataOut;
+	FloatAdder m_FloatAdder;
+	std::unique_ptr<tc::BufferResource<float>> m_pA;
+	std::unique_ptr<tc::BufferResource<float>> m_pB;
+	std::unique_ptr<tc::BufferResource<float>> m_pC;
 
-	uint32_t m_FrameCount{ 0 };
-
-	ConvertKernel m_ConvertKernel;
+	static constexpr tc::uint N = 100000;
 };
