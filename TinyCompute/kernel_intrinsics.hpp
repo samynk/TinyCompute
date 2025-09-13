@@ -59,11 +59,11 @@ namespace tc
 	struct DimTraits<tc::Dim::D1> {
 		using IndexType = int32_t;
 
-		static constexpr unsigned product(IndexType x) {
+		static constexpr int32_t product(IndexType x) {
 			return x;
 		}
 
-		static constexpr unsigned coordinateToIndex(IndexType coord, IndexType /*size*/) {
+		static constexpr int32_t coordinateToIndex(IndexType coord, IndexType /*size*/) {
 			return coord;
 		}
 	};
@@ -71,13 +71,13 @@ namespace tc
 	// Dimension 2 --> use uvec2
 	template<>
 	struct DimTraits<tc::Dim::D2> {
-		using IndexType = vec_base<int32_t, 2>;
+		using IndexType = tc::ivec2;
 
-		static constexpr unsigned product(IndexType dim) {
+		static constexpr int32_t product(IndexType dim) {
 			return dim.x * dim.y;
 		}
 
-		static constexpr unsigned coordinateToIndex(IndexType coord, IndexType size) {
+		static constexpr int32_t coordinateToIndex(IndexType coord, IndexType size) {
 			return coord.y * size.x + coord.x;
 		}
 	};
@@ -85,13 +85,13 @@ namespace tc
 	// Dimension 3 --> use uvec3
 	template<>
 	struct DimTraits<tc::Dim::D3> {
-		using IndexType = vec_base<int32_t, 3>;
+		using IndexType = tc::ivec3;
 
-		static constexpr unsigned product(IndexType dim) {
+		static constexpr int32_t product(IndexType dim) {
 			return dim.x * dim.y * dim.z;
 		}
 
-		static constexpr unsigned coordinateToIndex(IndexType coord, IndexType size) {
+		static constexpr int32_t coordinateToIndex(IndexType coord, IndexType size) {
 			return (coord.z * size.y + coord.y) * size.x + coord.x;
 		}
 	};
@@ -136,8 +136,7 @@ namespace tc
 	class BufferResource
 	{
 	public:
-		using Traits = DimTraits<D>;
-		using dimType = typename Traits::IndexType;
+		using dimType = typename DimTraits<D>::IndexType;
 
 		BufferResource()
 			:m_BufferSize{ 0 }
@@ -194,7 +193,7 @@ namespace tc
 			a.swap(b);
 		}
 
-		void randomize(T min, T max) requires std::is_arithmetic_v<T>{
+		void randomize(T min, T max) requires std::is_arithmetic_v<T> {
 			std::mt19937 rng{ std::random_device{}() };
 
 			if constexpr (std::is_integral_v<T>) {
@@ -210,12 +209,13 @@ namespace tc
 		}
 
 	private:
+		using Traits = DimTraits<D>;
 		dimType m_BufferSize;
 		std::vector<T> m_Data;
 		unsigned int m_SSBO_ID{ 0 };
 	};
 
-	
+
 	template<typename T, unsigned Binding, unsigned Set = 0 >
 	class BufferBinding
 	{
@@ -286,11 +286,10 @@ namespace tc
 	struct GPUFormatTraits<tc::InternalFormat::R8UI> {
 		using ChannelType = uint8_t;
 		using VectorType = tc::uvec4;
-		static constexpr uint8_t NumChannels = 4;
-		static inline constexpr tc::Channel indices[NumChannels] = { Channel::R, Channel::R, Channel::G, Channel::A };
+		static inline constexpr std::array<tc::Channel,1> channels{ Channel::R };
 	};
 
-	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelType pixType, unsigned Binding, unsigned Set = 0 >
+	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept pixType, unsigned Binding, unsigned Set = 0 >
 	class ImageBinding
 	{
 	public:
@@ -321,26 +320,23 @@ namespace tc
 	};
 
 	template<class Src, class Dst>
-	struct channel_convert;
+	struct ChannelConverter;
 
-	// Identity (no-op)
-	// constrain --> mogelijke types.
 	template<class T>
-	struct channel_convert<T, T> {
+	struct ChannelConverter<T, T> {
 		static constexpr T apply(T v) noexcept { return v; }
 	};
 
 	template<>
-	struct channel_convert<std::uint8_t, float> {
+	struct ChannelConverter<std::uint8_t, float> {
 		static constexpr float apply(std::uint8_t v) noexcept {
 			return float(v) * (1.0f / 255.0f);
 		}
 	};
 
 	template<>
-	struct channel_convert<float, std::uint8_t> {
+	struct ChannelConverter<float, std::uint8_t> {
 		static constexpr uint8_t apply(float v) noexcept {
-
 			return static_cast<uint8_t>(std::clamp(v, 0.0f, 100.0f) * 255.0f + 0.5f);
 		}
 	};
@@ -355,66 +351,59 @@ namespace tc
 	template<Dim D>
 	using tcVec = tc::vec_base<int32_t, dim_count_v<D>>;
 
-	template <std::size_t N, typename F, std::size_t... Is>
-	constexpr void for_constexpr_impl(F&& f, std::index_sequence<Is...>) {
-		(f(std::integral_constant<std::size_t, Is>{}), ...);
+	template<Channel C, class Dst, tc::cpu::PixelConcept P>
+	constexpr Dst channelLoad(const P& px) noexcept {
+		using Src = typename P::template ChannelType<C>;
+		return ChannelConverter<Src, Dst>::apply(px.template get<C>());
 	}
 
-	template <std::size_t N, typename F>
-	constexpr void for_constexpr(F&& f) {
-		for_constexpr_impl<N>(std::forward<F>(f), std::make_index_sequence<N>{});
-	}
-
-
-	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
+	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
 	auto imageLoad(const ImageBinding<G, D, P, B, S>& image, tcVec<D> texCoord)
 	{
-		using gpuTraits = GPUFormatTraits<G>;
-		auto* buf = image.getBufferData();
+		const auto* buf = image.getBufferData();
 		if (!buf) throw std::runtime_error("imageLoad: no buffer attached");
 
-		P px = (*buf)[texCoord];
-		// convert px to gpu format 
-		using T1 = P::ChannelType;
-		using T2 = gpuTraits::ChannelType;
+		const P& px = (*buf)[texCoord];
 
-		channel_convert<T1, T2> converter;
-		using resultType = gpuTraits::VectorType;
-		resultType result{};
-
-		for_constexpr<gpuTraits::NumChannels>([&](auto i) {
-			constexpr Channel channel = gpuTraits::indices[i];
-			result[i] = converter.apply(px.template get<channel>());
-			});
-
+		using gpuTraits = GPUFormatTraits<G>;
+		using dst_t = typename gpuTraits::ChannelType;
+		using vec_t = typename gpuTraits::VectorType;
+		vec_t result{
+			channelLoad<Channel::R,dst_t,P>(px),
+			channelLoad<Channel::G,dst_t,P>(px),
+			channelLoad<Channel::B,dst_t,P>(px),
+			channelLoad<Channel::A,dst_t,P>(px)
+		};
 		return result;
 	}
 
-	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
+	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
 	tcVec<D> imageSize(const ImageBinding<G, D, P, B, S>& image)
 	{
 		return image.getBufferData()->getDimension();
 	}
 
-	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
+	template<Channel C, class Src, tc::cpu::PixelConcept P>
+	constexpr void channelStore(P& px, Src value) noexcept {
+		using dst_t = typename P::template ChannelType<C>;
+		px.template set<C>(ChannelConverter<Src,dst_t>::apply(value));
+	}
+
+	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
 	void imageStore(
 		const ImageBinding<G, D, P, B, S>& image,
 		tcVec<D> texCoord,
 		typename GPUFormatTraits<G>::VectorType value
 	)
 	{
-		using gpuTraits = GPUFormatTraits<G>;
 		auto* buf = image.getBufferData();
 		if (!buf) throw std::runtime_error("imageStore: no buffer attached");
 
-		using T1 = gpuTraits::ChannelType;
-		using T2 = P::ChannelType;
-
-		channel_convert<T1, T2> converter;
-		auto& pix = (*buf)[texCoord];
-		for_constexpr<gpuTraits::NumChannels>([&](auto i) {
-			constexpr Channel channel = gpuTraits::indices[i];
-			pix.template set<channel>(converter.apply(value[i]));
-			});
+		using src_t = typename GPUFormatTraits<G>::ChannelType;
+		auto& px = (*buf)[texCoord];
+		channelStore<Channel::R,src_t, P>(px,value.x);
+		channelStore<Channel::G,src_t, P>(px,value.y);
+		channelStore<Channel::B,src_t, P>(px,value.z);
+		channelStore<Channel::A,src_t, P>(px,value.w);
 	}
 }

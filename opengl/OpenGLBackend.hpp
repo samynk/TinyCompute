@@ -98,7 +98,7 @@ namespace tc::gpu {
 			static constexpr uint8_t NumChannels = 1;
 		};
 
-		template<tc::cpu::PixelType> struct OpenGLExternalTraits;
+		template<tc::cpu::PixelConcept> struct OpenGLExternalTraits;
 
 		template<> struct OpenGLExternalTraits<tc::cpu::R8UI> {
 			static constexpr GLenum format = GL_RED_INTEGER;
@@ -127,7 +127,7 @@ namespace tc::gpu {
 			static constexpr int    bytesPerPixel = 16;
 		};
 
-		template<tc::InternalFormat G, tc::cpu::PixelType P>
+		template<tc::InternalFormat G, tc::cpu::PixelConcept P>
 		void uploadImageImpl(tc::BufferResource<P, tc::Dim::D2>& buffer)
 		{
 			static_assert(P::NumChannels >= 1 && P::NumChannels <= 4,
@@ -150,6 +150,11 @@ namespace tc::gpu {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+			glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+			glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
 			// Upload texture data
 			tc::ivec2 dim = buffer.getDimension();
 			glTexImage2D(GL_TEXTURE_2D, 0,
@@ -158,6 +163,7 @@ namespace tc::gpu {
 				OpenGLExternalTraits<P>::format, OpenGLExternalTraits<P>::type,
 				buffer.data()
 			);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
 			GLenum error = glGetError();
 			if (error != GL_NO_ERROR)
@@ -168,7 +174,7 @@ namespace tc::gpu {
 		}
 
 
-		template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
+		template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
 		void bindImageImpl(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
 			unsigned int imageID = image.getBufferData()->getSSBO_ID();

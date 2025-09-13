@@ -6,6 +6,34 @@
 #include "math/arithmetic.hpp"
 #include "images/ImageFormat.hpp"
 
+TEST(PixelTest, ReadAndWriteChannels)
+{
+	using namespace tc;
+	tc::cpu::RGB8 px{ 0.2,0.3,0.5 };
+
+	float r = px.get<Channel::R>();
+	float g = px.get<Channel::G>();
+	float b = px.get<Channel::B>();
+	float a = px.get<Channel::A>();
+
+	EXPECT_EQ(r, 0.2);
+	EXPECT_EQ(g, 0.3);
+	EXPECT_EQ(b, 0.5);
+	EXPECT_EQ(a, 1.0f);
+
+	using r_t  = tc::cpu::RGB8::ChannelType<Channel::R>;
+	static_assert(std::floating_point<r_t>);
+
+	using g_t = tc::cpu::RGB8::ChannelType<Channel::G>;
+	static_assert(std::floating_point<r_t>);
+
+	using b_t = tc::cpu::RGB8::ChannelType<Channel::B>;
+	static_assert(std::floating_point<r_t>);
+
+	using a_t = tc::cpu::RGB8::ChannelType<Channel::A>;
+	static_assert(std::floating_point<r_t>);
+}
+
 TEST(PixelTest, ChannelReadAndWrite)
 {
 	tc::cpu::Pixel<uint8_t, 1> gray{};

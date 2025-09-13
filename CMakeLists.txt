@@ -114,6 +114,7 @@ if (SWIZZLEFORGE_BUILD_EXAMPLES)
     add_subdirectory(Projects/GameOfLife/Step02_Ranges)
     add_subdirectory(Projects/GameOfLife/Step03_Workgroups)
     add_subdirectory(Projects/GameOfLife/Step04_ComputeShader)
+    add_subdirectory(Projects/GameOfLife/Step05_ComputeShaderImages)
 
 endif()
 

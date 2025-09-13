@@ -52,13 +52,13 @@ namespace tc
 			static_cast<Derived*>(this)->bindBufferImpl(buffer);
 		}
 
-		template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
+		template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
 		void bindImage(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
 			static_cast<Derived*>(this)->bindImageImpl(image);
 		}
 
-		template<tc::InternalFormat G, typename P>
+		template<tc::InternalFormat G, tc::cpu::PixelConcept P>
 		void uploadImage(BufferResource<P,tc::Dim::D2>& buffer)
 		{
 			static_cast<Derived*>(this)->template uploadImageImpl<G,P>(buffer);
@@ -121,7 +121,7 @@ namespace tc
 			// no op
 		}
 
-		template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelType P, unsigned B, unsigned S>
+		template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
 		void bindImageImpl(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
 			// no op

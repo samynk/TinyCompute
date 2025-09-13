@@ -131,6 +131,14 @@ bool KernelRewriter::isInNamespace(const clang::NamedDecl* FD, llvm::StringRef N
 	return false;
 }
 
+std::string KernelRewriter::printTypeNoNS(clang::QualType& qt)
+{
+	clang::PrintingPolicy policy(m_pASTContext->getLangOpts());
+	policy.SuppressScope = true;
+	policy.SuppressUnwrittenScope = true;
+	return qt.getAsString(policy);
+}
+
 
 
 bool KernelRewriter::rewriteBufferBinding(const clang::FieldDecl* FD) {
@@ -206,6 +214,9 @@ bool KernelRewriter::VisitFieldDecl(clang::FieldDecl* pField)
 	}
 	else if (checkUniformField(pField)) {
 		rewriteUniform(pField);
+	}
+	else if (checkStdArrayField(pField)) {
+		rewriteStdArray(pField);
 	}
 	else {
 		// remove namespaces of fields.
@@ -302,9 +313,144 @@ bool KernelRewriter::rewriteUniform(const clang::FieldDecl* FD) {
 	return true;
 }
 
+bool KernelRewriter::checkStdArrayField(const clang::FieldDecl* pField)
+{
+	using namespace clang::ast_matchers;
+	auto m = fieldDecl(
+		hasType(
+			classTemplateSpecializationDecl(
+				hasName("::std::array")
+			)
+		)
+		//hasInitializer(initListExpr())
+	);
+	auto innerMatches = match(
+		m,
+		*pField,
+		*m_pASTContext
+	);
+	if (!innerMatches.empty())
+	{
+		return true;
+	}
+	else {
+		return false;
+	}
+
+}
+
+bool KernelRewriter::rewriteStdArray(const clang::FieldDecl* pField)
+{
+	using namespace clang;
+	const QualType QT = pField->getType();
+	const TemplateSpecializationType* TST = QT->getAs<TemplateSpecializationType>();
+	if (!TST) return true;
+
+	QualType elemType;
+	unsigned location = 0, set = 0;
+
+	if (const auto* CTSDecl = dyn_cast<ClassTemplateSpecializationDecl>(
+		TST->getAsRecordDecl())) {
+
+		const auto& Args = CTSDecl->getTemplateArgs();
+		QualType elemType = Args[0].getAsType();
+
+		unsigned int size = 0;
+		if (Args[1].getKind() == clang::TemplateArgument::ArgKind::Integral) {
+			size = static_cast<unsigned>(Args[1].getAsIntegral().getZExtValue());
+		}
+		auto glslType = glslTypeForElement(elemType);
+		std::string arrayType;
+		if (glslType)
+		{
+			arrayType = glslType.value();
+		}
+		else {
+			arrayType = elemType.getAsString();
+		}
+
+		std::string replacement = "const "
+			+ arrayType + " "
+			+ pField->getDeclName().getAsString()
+			+ "[" + std::to_string(size) + "] = "
+			+ arrayType + "[" + std::to_string(size) + "]";
+
+		SourceManager& sm = m_pASTContext->getSourceManager();
+		clang::SourceLocation B = sm.getSpellingLoc(pField->getLocation());
+		clang::SourceLocation E = clang::Lexer::getLocForEndOfToken(B, 1, sm, m_pASTContext->getLangOpts());
+
+		SourceRange sr{ pField->getBeginLoc(),E };
+		PendingEdit pe{ sr, replacement };
+
+		m_PendingEdits.emplace_back(pe);
+	}
+
+	return true;
+}
+
+bool KernelRewriter::VisitInitListExpr(clang::InitListExpr* pInitList)
+{
+	using namespace clang;
+	
+
+	pInitList->dump();
+	SourceLocation bl = pInitList->getLBraceLoc();
+	SourceLocation br = pInitList->getRBraceLoc();
+
+	if (pInitList->isSemanticForm()) {
+		return true;
+	}
+
+	if (bl.isInvalid() || br.isInvalid()) {
+		llvm::errs() << "Invalid braces\n";
+		return true;
+	}
+	
+	PendingEdit pe{ bl ,"(" };
+	m_PendingEdits.emplace_back(pe);
+
+	
+	PendingEdit pe2{ br,")" };
+	m_PendingEdits.emplace_back(pe2);
+	return true;
+}
+
+bool KernelRewriter::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr* pMemberCall)
+{
+	using namespace clang::ast_matchers;
+	auto sizeMatcher = cxxMemberCallExpr(
+		callee(cxxMethodDecl(
+			hasName("size"),
+			ofClass(classTemplateSpecializationDecl(
+				hasName("std::array")
+			).bind("arrSpec"))
+		))
+	).bind("call");
+
+	auto innerMatches = match(
+		sizeMatcher,
+		*pMemberCall,
+		*m_pASTContext
+	);
+	if (!innerMatches.empty())
+	{
+		const auto* arrSpec =
+			innerMatches[0].getNodeAs<clang::ClassTemplateSpecializationDecl>("arrSpec");
+		const auto& args = arrSpec->getTemplateArgs();
+		if (args.size() < 2) return true;
+
+		if (args[1].getKind() == clang::TemplateArgument::ArgKind::Integral) {
+			auto size = static_cast<unsigned>(args[1].getAsIntegral().getZExtValue());
+			PendingEdit pe{ pMemberCall->getSourceRange(), std::to_string(size) };
+			m_PendingEdits.emplace_back(pe);
+		}
+		return true;
+	}
+	return true;
+}
+
 bool KernelRewriter::rewriteField(const clang::FieldDecl* pField)
 {
-	llvm::errs() << "rewriteField\n";
 	using namespace clang;
 	if (pField->getNameAsString() == "local_size")
 	{
@@ -381,8 +527,6 @@ bool KernelRewriter::rewriteImageBinding(const clang::FieldDecl* FD)
 	QualType elemType;
 	unsigned binding = 0, set = 0;
 
-	FD->dumpColor();
-
 	if (const auto* CTSDecl = dyn_cast<ClassTemplateSpecializationDecl>(
 		TST->getAsRecordDecl())) {
 
@@ -422,11 +566,11 @@ bool KernelRewriter::rewriteImageBinding(const clang::FieldDecl* FD)
 			std::string glsl = "layout(binding=" + std::to_string(binding) +
 				"," + desc.imageIdentifier + ") "
 				"uniform " + m_TypePrefix.at(desc.scalar) + "image" + m_DimensionSuffix.at(dimension.value()) +
-				" " + varName + "; ";
+				" " + varName;
 
 			// Replace the entire field declaration (including initializer)
 			SourceLocation endLoc = Lexer::getLocForEndOfToken(
-				FD->getSourceRange().getEnd(), 0, SM, m_pASTContext->getLangOpts());
+				FD->getSourceRange().getEnd(), 1, SM, m_pASTContext->getLangOpts());
 			SourceRange fullRange(FD->getSourceRange().getBegin(), endLoc);
 
 			PendingEdit edit{ fullRange, glsl };
@@ -569,8 +713,6 @@ bool KernelRewriter::VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCas
 
 bool KernelRewriter::VisitCallExpr(clang::CallExpr* callExpr)
 {
-	/*llvm::errs() << "\nCall Expr\n";
-	callExpr->dump();*/
 	if (auto* functionCall = callExpr->getDirectCallee()) {
 
 		if (isInNamespace(functionCall, "tc")) {
@@ -606,7 +748,6 @@ void KernelRewriter::focusedDump(const clang::Stmt* S, clang::ASTContext& Ctx) {
 
 void KernelRewriter::rewriteVecCtorType(const clang::Expr* E) {
 	if (!E) return;
-	//focusedDump(E,*m_pASTContext);
 	using namespace clang;
 	if (auto* TO = dyn_cast<CXXTemporaryObjectExpr>(E->IgnoreParenImpCasts())) {
 		if (auto* TSI = TO->getTypeSourceInfo()) {
@@ -617,6 +758,16 @@ void KernelRewriter::rewriteVecCtorType(const clang::Expr* E) {
 				m_PendingEdits.emplace_back(edit);
 			}
 		}
+		if (TO->isListInitialization())
+		{
+			SourceRange braces = TO->getParenOrBraceRange();
+			using namespace clang;
+			PendingEdit pe{ braces.getBegin(),"(" };
+			m_PendingEdits.emplace_back(pe);
+
+			PendingEdit pe2{ braces.getEnd(),")" };
+			m_PendingEdits.emplace_back(pe2);
+		}
 		return;
 	}
 
@@ -625,9 +776,8 @@ void KernelRewriter::rewriteVecCtorType(const clang::Expr* E) {
 			QualType QT = TSI->getType();
 			if (auto glsl = glslTypeForVecBase(QT)) {
 				TypeLoc TL = TSI->getTypeLoc();
-				//llvm::errs() << "functional cast glsl type : " << glsl << "\n";
-				//PendingEdit edit{ TL.getSourceRange(),*glsl };
-				//m_PendingEdits.emplace_back(edit);
+				PendingEdit edit{ TL.getSourceRange(),*glsl };
+				m_PendingEdits.emplace_back(edit);
 			}
 		}
 		return;

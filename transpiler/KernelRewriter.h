@@ -23,6 +23,8 @@ public:
 	bool VisitImplicitCastExpr(clang::ImplicitCastExpr* pImplicitCast);
 	bool VisitCallExpr(clang::CallExpr* callExpr);
 	bool VisitUsingDirectiveDecl(clang::UsingDirectiveDecl* pUsing);
+	bool VisitInitListExpr(clang::InitListExpr* pInitList);
+	bool VisitCXXMemberCallExpr(clang::CXXMemberCallExpr* pMemberCall);
 
 	static void focusedDump(const clang::Stmt* S, clang::ASTContext& Ctx);
 
@@ -34,8 +36,22 @@ public:
 
 	bool VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr* E);
 
-	bool TraverseFieldDecl(clang::FieldDecl* fieldDec) {
-		return this->WalkUpFromFieldDecl(fieldDec);
+	bool TraverseFieldDecl(clang::FieldDecl* pFieldDecl) {
+		
+		if (pFieldDecl->getNameAsString() == "local_size"
+			|| checkBufferBinding(pFieldDecl)
+			|| checkImageBinding(pFieldDecl)
+			|| checkUniformField(pFieldDecl))
+		{
+			return this->WalkUpFromFieldDecl(pFieldDecl);
+		}
+		else {
+			return RecursiveASTVisitor::TraverseFieldDecl(pFieldDecl);
+		}
+	}
+
+	bool shouldVisitImplicitCode() {
+		return true;
 	}
 private:
 	static std::string typeNameNoScope(clang::QualType QT,const clang::ASTContext& context) {
@@ -63,10 +79,16 @@ private:
 	bool checkUniformField(clang::FieldDecl* pField);
 	bool rewriteUniform(const clang::FieldDecl* pField);
 
+	bool checkStdArrayField(const clang::FieldDecl* pField);
+	bool rewriteStdArray(const clang::FieldDecl* pField);
+
 	bool rewriteField(const clang::FieldDecl* pField);
 
 	std::optional<std::string> getUnqualifiedEnumType(const clang::TemplateArgument& ta);
 	bool isInNamespace(const clang::NamedDecl* FD, llvm::StringRef NS);
+
+	std::string printTypeNoNS(clang::QualType& qt); 
+
 
 	clang::ASTContext* m_pASTContext;
 	std::vector<PendingEdit>& m_PendingEdits;
@@ -82,48 +104,48 @@ private:
 	inline static const std::map<std::string, ImageFormatDescriptor> m_ImageFormats =
 	{
 		// floating point formats
-		{"RGBA32F", {"rgba32f",tc::Scalar::FLOAT} },
-		{"RGBA16F", {"rgba16f",tc::Scalar::FLOAT}},
-		{"RG32F",{"rg32f",tc::Scalar::FLOAT}},
-		{"RG16F",{"rg16f",tc::Scalar::FLOAT}},
-		{"R11F_G11F_B10F",{"r11f_g11f_b10f",tc::Scalar::FLOAT}},
-		{"R32F",{"r32f",tc::Scalar::FLOAT}},
-		{"R16F",{"r16f",tc::Scalar::FLOAT}},
+		{"RGBA32F", {"rgba32f",tc::Scalar::Float} },
+		{"RGBA16F", {"rgba16f",tc::Scalar::Float}},
+		{"RG32F",{"rg32f",tc::Scalar::Float}},
+		{"RG16F",{"rg16f",tc::Scalar::Float}},
+		{"R11F_G11F_B10F",{"r11f_g11f_b10f",tc::Scalar::Float}},
+		{"R32F",{"r32f",tc::Scalar::Float}},
+		{"R16F",{"r16f",tc::Scalar::Float}},
 		// unorm formats
-		{"RGBA16",{	"rgba16",tc::Scalar::UNORM}},
-		{"RGB10_A2",{"rgb10_a2",tc::Scalar::UNORM}},
-		{"RGBA8",{"rgba8",tc::Scalar::UNORM}},
-		{"RG16",{"rg16",tc::Scalar::UNORM}},
-		{"RG8",{"rg8",tc::Scalar::UNORM}},
-		{"R16",{"r16",tc::Scalar::UNORM}},
-		{"R8",{"r8",tc::Scalar::UNORM}},
+		{"RGBA16",{	"rgba16",tc::Scalar::UNorm}},
+		{"RGB10_A2",{"rgb10_a2",tc::Scalar::UNorm}},
+		{"RGBA8",{"rgba8",tc::Scalar::UNorm}},
+		{"RG16",{"rg16",tc::Scalar::UNorm}},
+		{"RG8",{"rg8",tc::Scalar::UNorm}},
+		{"R16",{"r16",tc::Scalar::UNorm}},
+		{"R8",{"r8",tc::Scalar::UNorm}},
 		// signed normal formats
-		{"RGBA16_SNORM",{"rgba16_snorm",tc::Scalar::SNORM}},
-		{"RGBA8_SNORM",{"rgba8_snorm",tc::Scalar::SNORM}},
-		{"RG16_SNORM",{"rg16_snorm",tc::Scalar::SNORM}},
-		{"RG8_SNORM",{"rg8_snorm",tc::Scalar::SNORM}},
-		{"R16_SNORM",{"r16_snorm",tc::Scalar::SNORM}},
+		{"RGBA16_SNORM",{"rgba16_snorm",tc::Scalar::SNorm}},
+		{"RGBA8_SNORM",{"rgba8_snorm",tc::Scalar::SNorm}},
+		{"RG16_SNORM",{"rg16_snorm",tc::Scalar::SNorm}},
+		{"RG8_SNORM",{"rg8_snorm",tc::Scalar::SNorm}},
+		{"R16_SNORM",{"r16_snorm",tc::Scalar::SNorm}},
 		// unsigned integer formats
-		{"RGBA32UI",{"rgba32ui",tc::Scalar::UINT}},
-		{"RGBA16UI",{"rgba16ui",tc::Scalar::UINT}},
-		{"RGB10_A2UI",{"rgb10_a2ui",tc::Scalar::UINT}},
-		{"RGBA8UI",{"rgba8ui",tc::Scalar::UINT}},
-		{"RG32UI",{"rg32ui",tc::Scalar::UINT}},
-		{"RG16UI",{"rg16ui",tc::Scalar::UINT}},
-		{"RG8UI",{"rg8ui",tc::Scalar::UINT}},
-		{"R32UI",{"r32ui",tc::Scalar::UINT}},
-		{"R16UI",{"r16ui",tc::Scalar::UINT}},
-		{"R8UI", {"r8ui",tc::Scalar::UINT}},
+		{"RGBA32UI",{"rgba32ui",tc::Scalar::UInt}},
+		{"RGBA16UI",{"rgba16ui",tc::Scalar::UInt}},
+		{"RGB10_A2UI",{"rgb10_a2ui",tc::Scalar::UInt}},
+		{"RGBA8UI",{"rgba8ui",tc::Scalar::UInt}},
+		{"RG32UI",{"rg32ui",tc::Scalar::UInt}},
+		{"RG16UI",{"rg16ui",tc::Scalar::UInt}},
+		{"RG8UI",{"rg8ui",tc::Scalar::UInt}},
+		{"R32UI",{"r32ui",tc::Scalar::UInt}},
+		{"R16UI",{"r16ui",tc::Scalar::UInt}},
+		{"R8UI", {"r8ui",tc::Scalar::UInt}},
 		//signed integer formats
-		{ "RGBA32I", {"rgba32i",tc::Scalar::INT} },
-		{ "RGBA16I", {"rgba16i",tc::Scalar::INT} },
-		{ "RGBA8I", {"rgba8i",tc::Scalar::INT} },
-		{ "RG32I", {"rg32i",tc::Scalar::INT} },
-		{ "RG16I", {"rg16i",tc::Scalar::INT} },
-		{ "RG8I", {"rg8i",tc::Scalar::INT} },
-		{ "R32I", {"r32i",tc::Scalar::INT} },
-		{ "R16I", {"r16i",tc::Scalar::INT} },
-		{ "R8I", {"r8i",tc::Scalar::INT} }
+		{ "RGBA32I", {"rgba32i",tc::Scalar::Int} },
+		{ "RGBA16I", {"rgba16i",tc::Scalar::Int} },
+		{ "RGBA8I", {"rgba8i",tc::Scalar::Int} },
+		{ "RG32I", {"rg32i",tc::Scalar::Int} },
+		{ "RG16I", {"rg16i",tc::Scalar::Int} },
+		{ "RG8I", {"rg8i",tc::Scalar::Int} },
+		{ "R32I", {"r32i",tc::Scalar::Int} },
+		{ "R16I", {"r16i",tc::Scalar::Int} },
+		{ "R8I", {"r8i",tc::Scalar::Int} }
 	};
 
 	inline static const std::map<std::string, std::string> m_DimensionSuffix =
@@ -133,10 +155,10 @@ private:
 
 	inline static const std::map<tc::Scalar, std::string> m_TypePrefix =
 	{
-		{tc::Scalar::FLOAT, ""},
-		{tc::Scalar::INT, "i"},
-		{tc::Scalar::UINT, "u"},
-		{tc::Scalar::UNORM, ""},
-		{tc::Scalar::SNORM, ""}
+		{tc::Scalar::Float, ""},
+		{tc::Scalar::Int, "i"},
+		{tc::Scalar::UInt, "u"},
+		{tc::Scalar::UNorm, ""},
+		{tc::Scalar::SNorm, ""}
 	};
 };

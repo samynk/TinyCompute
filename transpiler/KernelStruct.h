@@ -11,6 +11,7 @@ public:
 	KernelStruct(const clang::CXXRecordDecl* kernelRecord, std::string fileLocation)
 		:m_Kernel{ kernelRecord }, m_FileLoc{ fileLocation }
 	{
+		/*
 		auto unsignedMatcher = varDecl(
 			anyOf(
 				varDecl(hasType(isUnsignedInteger())).bind("unsignedVar"),
@@ -18,7 +19,7 @@ public:
 				fieldDecl(hasType(isUnsignedInteger())).bind("unsignedVar"),
 				functionDecl(returns(isUnsignedInteger())).bind("unsignedReturn")
 			)
-		).bind("unsigned");
+		).bind("unsigned"); */
 	}
 
 	const clang::CXXRecordDecl* getKernelRecordDecl() const {
@@ -37,7 +38,7 @@ public:
 		llvm::errs() << "Inside export compute shader\n";
 		clang::SourceManager& sourceManager = rewriter.getSourceMgr();
 		const clang::LangOptions& languageOptions = rewriter.getLangOpts();
-		llvm::errs() << "Inside export compute shader\n";
+		
 		SourceRange range = m_Kernel->getBraceRange();
 		SourceLocation contentStart = clang::Lexer::getLocForEndOfToken(
 			sourceManager.getExpansionLoc(range.getBegin()), 0, sourceManager, languageOptions);
@@ -49,7 +50,7 @@ public:
 		std::filesystem::path fileLocPath = m_FileLoc;
 		std::filesystem::path glslFile = fileLocPath.replace_extension("comp");
 		path /= glslFile;
-		llvm::errs() << "Writing to " << path.string() << "\n";
+		
 		std::filesystem::create_directories(path.parent_path());
 
 

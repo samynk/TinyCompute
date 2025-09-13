@@ -13,11 +13,11 @@ namespace tc {
 	};
 
 	enum class Scalar {
-		FLOAT,
-		INT,
-		UINT,
-		UNORM,
-		SNORM
+		Float,
+		Int,
+		UInt,
+		UNorm,
+		SNorm
 	};
 
 	enum class Dim : uint8_t {
@@ -45,7 +45,7 @@ namespace tc {
 		DEPTH_STENCIL
 	};
 
-	enum class Channel : std::uint8_t { R, G, B, A };
+	enum class Channel { R = 0, G = 1, B = 2, A = 3 };
 
 	template<typename T>
 	constexpr T channel_min() noexcept {
@@ -61,125 +61,54 @@ namespace tc {
 }
 
 namespace tc::cpu {
-	template<typename T, uint8_t N>
+	template<typename T, int N>
 	struct Pixel {
 		static_assert(N >= 1 && N <= 4, "Pixel supports channel counts 1..4 only.");
-	};
 
-	template<typename T>
-	struct Pixel<T, 1>
-	{
-		T r;
+		constexpr Pixel() : m_ColorData{} {}
+
+		constexpr Pixel(T r,
+			T g = channel_min<T>(),
+			T b = channel_min<T>(),
+			T a = channel_max<T>()) : m_ColorData{}
+		{
+			set<Channel::R>(r);
+			set<Channel::G>(g);
+			set<Channel::B>(b);
+			set<Channel::A>(a);
+		}
 
 		template<Channel C>
 		constexpr T get() const noexcept
 		{
-			if constexpr (C != Channel::A) return r;
-			else return channel_max<T>();
+			constexpr int channel = static_cast<int>(C);
+			if constexpr (channel < N)
+				return m_ColorData[channel];
+			else {
+				if constexpr (C != Channel::A)
+					return channel_min<T>();
+				else
+					return channel_max<T>();
+			}
 		}
 
 		template<Channel C>
 		constexpr void set(T value) noexcept
 		{
-			if constexpr (C != Channel::A) r = value;
-			// ignore A
+			constexpr int channel = static_cast<int>(C);
+			if constexpr (channel < N) {
+				m_ColorData[channel] = value;
+			}
 		}
-		static constexpr uint8_t NumChannels = 1;
+
+		template<Channel C>
 		using ChannelType = T;
+
+		static constexpr int NumChannels = N;
+	private:
+		std::array<T, N> m_ColorData;
+
 	};
-
-	template<typename T>
-	struct Pixel<T, 2>
-	{
-		T r, a;
-
-		template<Channel C>
-		constexpr T get() const noexcept
-		{
-			if constexpr (C != Channel::A) return r;
-			else return a;
-		}
-
-		template<Channel C>
-		constexpr void set(T value) noexcept
-		{
-			if constexpr (C != Channel::A) r = value;
-			else a = value;
-		}
-
-		static constexpr uint8_t NumChannels = 2;
-		using ChannelType = T;
-	};
-
-	template<typename T>
-	struct Pixel<T, 3>
-	{
-		T r, g, b;
-
-		template<Channel C>
-		constexpr T get() const noexcept
-		{
-			if constexpr (C == Channel::R) return r;
-			else if constexpr (C == Channel::G) return g;
-			else if constexpr (C == Channel::B) return b;
-			else return channel_max<T>();
-		}
-
-		template<Channel C>
-		constexpr void set(T value) noexcept
-		{
-			if constexpr (C == Channel::R) r = value;
-			else if constexpr (C == Channel::G) g = value;
-			else if constexpr (C == Channel::B) b = value;
-			// don't write alpha.
-		}
-
-		static constexpr uint8_t NumChannels = 3;
-		using ChannelType = T;
-	};
-
-	template<typename T>
-	struct Pixel<T, 4>
-	{
-		T r, g, b, a;
-
-		template<Channel C>
-		constexpr T get() const noexcept
-		{
-			if constexpr (C == Channel::R) return r;
-			else if constexpr (C == Channel::G) return g;
-			else if constexpr (C == Channel::B) return b;
-			else return a;
-		}
-
-		template<Channel C>
-		constexpr void set(T value) noexcept
-		{
-			if constexpr (C == Channel::R) r = value;
-			else if constexpr (C == Channel::G) g = value;
-			else if constexpr (C == Channel::B) b = value;
-			else a = value;
-		}
-
-		static constexpr uint8_t NumChannels = 4;
-		using ChannelType = T;
-	};
-
-	// Pixel concept
-	template<typename X>
-	struct is_pixel_specialization : std::false_type {};
-
-	// true only for Pixel<T,N>
-	template<typename T, std::size_t N>
-	struct is_pixel_specialization<Pixel<T, N>> : std::true_type {};
-
-	template<typename X>
-	inline constexpr bool is_pixel_specialization_v =
-		is_pixel_specialization<std::remove_cvref_t<X>>::value;
-
-	// Friendly concept name for errors
-	template<typename P>
-	concept PixelType = is_pixel_specialization_v<P>;
 
 	using R8 = Pixel<float, 1>;
 	using RA8 = Pixel<float, 2>;
@@ -190,4 +119,22 @@ namespace tc::cpu {
 	using RA8UI = Pixel<uint8_t, 2>;
 	using RGB8UI = Pixel<uint8_t, 3>;
 	using RGBA8UI = Pixel<uint8_t, 4>;
+
+	template<class P, Channel C>
+	concept ChannelConcept =
+		requires(P p) {
+		typename P::template ChannelType<C>;
+
+		{ p.template get<C>() }
+		-> std::convertible_to<typename P::template ChannelType<C>>;
+
+		{ p.template set<C>(p.template get<C>()) };
+	};
+
+	template<class P>
+	concept PixelConcept =
+		ChannelConcept<P, Channel::R>&&
+		ChannelConcept<P, Channel::G>&&
+		ChannelConcept<P, Channel::B>&&
+		ChannelConcept<P, Channel::A>;
 }
