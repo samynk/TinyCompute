@@ -49,4 +49,4 @@ PUBLIC
 #)
 
 add_dependencies(${ProjectName} sf_transpile ComputeLibOpenGL) 
-set_target_properties(${ProjectName} PROPERTIES FOLDER "03-Examples/B-GameOfLife")
+set_target_properties(${ProjectName} PROPERTIES FOLDER "03-Examples/C-GameOfLife")

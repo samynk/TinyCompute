@@ -35,7 +35,6 @@ namespace tc
 
 	template<typename> struct is_vec_base_impl : std::false_type {};
 
-	// C++20-friendly: constrain inside the value, or in the parameter list (both shown)
 	template<typename T, auto N>
 	struct is_vec_base_impl<vec_base<T, N>>
 		: std::bool_constant< GLSLType<std::remove_cv_t<T>>&& VecSize<N> > {
@@ -50,6 +49,9 @@ namespace tc
 	concept UniformValue =
 		GLSLType<std::remove_cvref_t<U>> || VecBase<U>;
 
+	enum class BufferLocation {
+		CPU, GPU
+	};
 
 	template<tc::Dim D>
 	struct DimTraits;
@@ -115,8 +117,6 @@ namespace tc
 		T& get() {
 			return m_Value;
 		}
-
-		
 
 		const T& get() const {
 			return m_Value;
@@ -221,11 +221,24 @@ namespace tc
 			}
 		}
 
+		void setBufferLocation(BufferLocation loc) {
+			m_BufferLocation = loc;
+		}
+
+		bool isOnCPU() {
+			return m_BufferLocation == BufferLocation::CPU;
+		}
+
+		bool isOnGPU() {
+			return m_BufferLocation == BufferLocation::GPU;
+		}
+
 	private:
 		using Traits = DimTraits<D>;
 		dimType m_BufferSize;
 		std::vector<T> m_Data;
 		unsigned int m_SSBO_ID{ 0 };
+		BufferLocation m_BufferLocation{ BufferLocation::CPU };
 	};
 
 
@@ -288,7 +301,7 @@ namespace tc
 
 	template<>
 	struct GPUFormatTraits<tc::InternalFormat::RGBA8> {
-		using ChannelType = uint32_t;
+		using ChannelType = float;
 		using VectorType = tc::vec4;
 		static inline constexpr std::array<tc::Channel, 4> channels{ Channel::R, Channel::G, Channel::B, Channel::A };
 	};
@@ -369,7 +382,7 @@ namespace tc
 	template<>
 	struct ChannelConverter<float, std::uint8_t> {
 		static constexpr uint8_t apply(float v) noexcept {
-			return static_cast<uint8_t>(std::clamp(v, 0.0f, 100.0f) * 255.0f + 0.5f);
+			return static_cast<uint8_t>(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f);
 		}
 	};
 

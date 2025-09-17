@@ -1,4 +1,4 @@
-﻿set(ProjectName "Project05")
+﻿set(ProjectName "RaytracerGPU")
 add_executable(${ProjectName}
     main.cpp
  "RayTracer02.h" "RayTracerWindow.h" "RayTracerWindow.cpp")
@@ -49,4 +49,4 @@ PUBLIC
 #)
 
 add_dependencies(${ProjectName} sf_transpile ComputeLibOpenGL) 
-set_target_properties(${ProjectName} PROPERTIES FOLDER "03‑Examples")
+set_target_properties(${ProjectName} PROPERTIES FOLDER "03-Examples/B-Raytracer")

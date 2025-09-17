@@ -94,11 +94,18 @@ namespace tc
 		
 		BackendType m_Backend;
 	};
+	
+	enum class ExecutionPolicy
+	{
+		Par, Unseq, Seq, Par_unseq
+	};
 
 	class CPUBackend : public ComputeBackend<CPUBackend>
 	{
 	public:
-		CPUBackend() : ComputeBackend{ BackendType::CPU }
+		CPUBackend(ExecutionPolicy ep = ExecutionPolicy::Par) : 
+			ComputeBackend{ BackendType::CPU },
+			m_Policy{ep}
 		{
 
 		}
@@ -106,31 +113,31 @@ namespace tc
 		template<typename BufferType>
 		void uploadBufferImpl(tc::BufferResource<BufferType>& buffer)
 		{
-			// no op
+			buffer.setBufferLocation(BufferLocation::CPU);
 		}
 
 		template<typename BufferType>
 		void downloadBufferImpl(tc::BufferResource<BufferType>& buffer)
 		{
-			// no op
+			buffer.setBufferLocation(BufferLocation::CPU);
 		}
 
 		template<typename T, unsigned Binding, unsigned Set>
 		void bindBufferImpl(const tc::BufferBinding<T, Binding, Set>& buffer)
 		{
-			// no op
+			buffer.getBufferData()->setBufferLocation(BufferLocation::CPU);
 		}
 
 		template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
 		void bindImageImpl(const tc::ImageBinding<G, D, P, B, S>& image)
 		{
-			// no op
+			image.getBufferData()->setBufferLocation(BufferLocation::CPU);
 		}
 
 		template<InternalFormat format,typename BufferType> 
-		void uploadImageImpl(tc::BufferResource<BufferType>& buffer)
+		void uploadImageImpl(tc::BufferResource<BufferType,Dim::D2>& buffer)
 		{
-			// no op
+			buffer.setBufferLocation(BufferLocation::CPU);
 		}
 
 		template<typename T, int Location>
@@ -164,13 +171,38 @@ namespace tc
 			const uint64_t totalWork =
 				uint64_t(globalWorkSize.x) * globalWorkSize.y * globalWorkSize.z;
 			auto range = std::views::iota(uint64_t{ 0 }, totalWork);
+ 
+			auto kernelLambda = [&](const uint64_t xi) {
+				tc::gl_GlobalInvocationID = unflatten3D(xi, globalWorkSize);
+				kernel.main();
+				};
+			switch (m_Policy)
+			{
+			case ExecutionPolicy::Par: {
+				std::for_each(std::execution::par
+					, range.begin(), range.end(), kernelLambda); 
+				break;
+			}
+			case ExecutionPolicy::Seq: {
+				std::for_each(std::execution::seq
+					, range.begin(), range.end(), kernelLambda); 
+				break;
+			}
+			case ExecutionPolicy::Par_unseq: {
+				std::for_each(std::execution::par_unseq
+					, range.begin(), range.end(), kernelLambda);
+				break;
+			}
+			case ExecutionPolicy::Unseq: {
+				std::for_each(std::execution::unseq
+					, range.begin(), range.end(), kernelLambda); 
+				break;
+			}
+			};
 			
-			std::for_each(std::execution::par_unseq,
-				range.begin(), range.end(),
-				[&](const uint64_t xi) {
-					tc::gl_GlobalInvocationID = unflatten3D(xi, globalWorkSize);
-					kernel.main();
-				});
+				
 		}
+	private:
+		ExecutionPolicy m_Policy;
 	};
 }

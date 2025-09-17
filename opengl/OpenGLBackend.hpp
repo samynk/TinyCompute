@@ -16,7 +16,8 @@ namespace tc::gpu {
 	class GPUBackend : public tc::ComputeBackend<GPUBackend>
 	{
 	public:
-		GPUBackend() : tc::ComputeBackend<GPUBackend>{ tc::BackendType::OpenGL }
+		GPUBackend(tc::ExecutionPolicy = tc::ExecutionPolicy::Par) : 
+			tc::ComputeBackend<GPUBackend>{ tc::BackendType::OpenGL }
 		{
 
 		}
@@ -42,6 +43,7 @@ namespace tc::gpu {
 				GL_STATIC_DRAW
 			);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+			buffer.setBufferLocation(BufferLocation::GPU);
 		}
 
 		template<typename BufferType>
@@ -76,6 +78,7 @@ namespace tc::gpu {
 		{
 			unsigned int bufferID = buffer.getBufferData()->getSSBO_ID();
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Binding, bufferID);
+			buffer.getBufferData()->setBufferLocation(BufferLocation::GPU);
 		}
 
 		template<tc::InternalFormat G>
@@ -172,6 +175,7 @@ namespace tc::gpu {
 				throw std::runtime_error("OpenGL Error in OpenGLBackend::uploadImageImpl : " + std::to_string(error));
 			}
 			glBindTexture(GL_TEXTURE_2D, 0);
+			buffer.setBufferLocation(BufferLocation::GPU);
 		}
 
 
@@ -187,6 +191,7 @@ namespace tc::gpu {
 			{
 				throw std::runtime_error("OpenGL Error in GLImage::bind(): " + std::to_string(error));
 			}
+			image.getBufferData()->setBufferLocation(BufferLocation::GPU);
 		}
 
 		template<int Location, typename T>

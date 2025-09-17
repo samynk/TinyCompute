@@ -7,4 +7,4 @@ add_executable(${ProjectName}
 target_compile_features(${ProjectName} PUBLIC cxx_std_20)
 target_include_directories(${ProjectName} PRIVATE ${pge_SOURCE_DIR})
 
-set_target_properties(${ProjectName} PROPERTIES FOLDER "03-Examples/B-GameOfLife")
+set_target_properties(${ProjectName} PROPERTIES FOLDER "03-Examples/C-GameOfLife")
