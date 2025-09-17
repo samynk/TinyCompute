@@ -17,4 +17,19 @@ namespace tc
 		}
 		return op / sqrt(squared);
 	}
+
+	template<typename T>
+		requires GLSLNumericType<T> 
+	T clamp(T op, T min, T max) {
+		return std::clamp(op, min, max);
+	}
+
+	template<typename T, uint8_t N>
+		requires GLSLFloatType<T> and VecSize<N>
+	tc::vec_base<T, N> clamp(tc::vec_base<T, N> op, T min, T max)
+	{
+		for (int i = 0; i < N; ++i) {
+			op[i] = std::clamp(op[i], min, max);
+		}
+	}
 }

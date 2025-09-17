@@ -34,6 +34,7 @@ namespace tc::gpu {
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer.getSSBO_ID());
 
 			// Allocate memory for the SSBO and upload the data
+			auto size = buffer.size() * sizeof(BufferType);
 			glBufferData(
 				GL_SHADER_STORAGE_BUFFER,
 				buffer.size() * sizeof(BufferType),
@@ -197,6 +198,8 @@ namespace tc::gpu {
 				glUniform1i(Location, uniform.get());
 			else if constexpr (std::is_same_v <T, unsigned int>)
 				glUniform1ui(Location, uniform.get());
+			else if constexpr (std::is_same_v<T, vec_base<float,3>>)
+				glUniform3f(Location, uniform.get().x, uniform.get().y, uniform.get().z);
 			else
 				static_assert(false, "Unsupported uniform type for bindUniformImpl.");
 		}

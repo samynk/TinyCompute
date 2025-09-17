@@ -17,7 +17,13 @@ public:
 	
 private:
 	RayTracerKernel m_RayTracerKernel;
-	VisualizeRaysKernel m_VisualizeRaysKernel;
+	SphereRayTracer m_SphereRayTracer;
 	tc::BufferResource<tc::cpu::RGBA8, tc::Dim::D2>* m_pCameraRaysImage;
 	uint32_t m_FrameCount{ 0 };
+
+	using SphereBuffer = tc::BufferResource<SphereRayTracer::Sphere>;
+	std::unique_ptr<SphereBuffer> m_pSpheres;
+
+	using TBuffer = tc::BufferResource<float>;
+	std::unique_ptr<TBuffer> m_pTBuffer;
 };

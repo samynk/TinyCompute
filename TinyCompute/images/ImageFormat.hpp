@@ -20,7 +20,7 @@ namespace tc {
 		SNorm
 	};
 
-	enum class Dim : uint8_t {
+	enum class Dim {
 		D1 = 1u,
 		D2 = 2u,
 		D3 = 3u
@@ -45,7 +45,7 @@ namespace tc {
 		DEPTH_STENCIL
 	};
 
-	enum class Channel { R = 0, G = 1, B = 2, A = 3 };
+	enum class Channel { R = 0, G = 1, B = 2, A = 3, Min = 4, Max = 5};
 
 	template<typename T>
 	constexpr T channel_min() noexcept {

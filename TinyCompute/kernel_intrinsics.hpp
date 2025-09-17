@@ -116,17 +116,25 @@ namespace tc
 			return m_Value;
 		}
 
-		operator T& () {
-			return m_Value;
-		}
+		
 
 		const T& get() const {
 			return m_Value;
 		}
 
-		operator const T& () const {
+		operator const T& () const & {
 			return m_Value;
 		}
+
+		operator T& () &{
+			return m_Value;
+		}
+
+		operator T && () && {
+			return std::move(m_Value);
+		}
+
+
 	private:
 		unsigned m_Location = Location;
 		T m_Value;
@@ -191,6 +199,11 @@ namespace tc
 
 		friend void swap(BufferResource& a, BufferResource& b) noexcept(noexcept(a.swap(b))) {
 			a.swap(b);
+		}
+
+		void fill(const T& value) requires GLSLType<T>
+		{
+			std::fill(m_Data.begin(), m_Data.end(), value);
 		}
 
 		void randomize(T min, T max) requires std::is_arithmetic_v<T> {
@@ -270,23 +283,28 @@ namespace tc
 	struct GPUFormatTraits<tc::InternalFormat::RGBA32F> {
 		using ChannelType = float;
 		using VectorType = tc::vec4;
-		static constexpr uint8_t NumChannels = 4;
-		static inline constexpr tc::Channel indices[NumChannels] = { Channel::R, Channel::G, Channel::B, Channel::A };
+		static inline constexpr std::array<tc::Channel, 4> channels{ Channel::R, Channel::G, Channel::B, Channel::A };
 	};
 
 	template<>
 	struct GPUFormatTraits<tc::InternalFormat::RGBA8> {
-		using ChannelType = float;
+		using ChannelType = uint32_t;
 		using VectorType = tc::vec4;
-		static constexpr uint8_t NumChannels = 4;
-		static inline constexpr tc::Channel indices[NumChannels] = { Channel::R, Channel::G, Channel::B, Channel::A };
+		static inline constexpr std::array<tc::Channel, 4> channels{ Channel::R, Channel::G, Channel::B, Channel::A };
 	};
 
 	template<>
 	struct GPUFormatTraits<tc::InternalFormat::R8UI> {
-		using ChannelType = uint8_t;
+		using ChannelType = uint32_t;
 		using VectorType = tc::uvec4;
-		static inline constexpr std::array<tc::Channel,1> channels{ Channel::R };
+		static inline constexpr std::array<tc::Channel, 4> channels{ Channel::R, Channel::Min, Channel::Min, Channel::Max };
+	};
+
+	template<>
+	struct GPUFormatTraits<tc::InternalFormat::R32F> {
+		using ChannelType = float;
+		using VectorType = tc::uvec4;
+		static inline constexpr std::array<tc::Channel, 4> channels{ Channel::R, Channel::Min, Channel::Min, Channel::Max };
 	};
 
 	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept pixType, unsigned Binding, unsigned Set = 0 >
@@ -335,6 +353,20 @@ namespace tc
 	};
 
 	template<>
+	struct ChannelConverter<std::uint8_t, std::uint32_t> {
+		static constexpr uint32_t apply(std::uint8_t v) noexcept {
+			return v;
+		}
+	};
+
+	template<>
+	struct ChannelConverter<std::uint32_t, std::uint8_t> {
+		static constexpr uint8_t apply(std::uint32_t v) noexcept {
+			return static_cast<uint8_t>(std::clamp(v, 0u, 255u));
+		}
+	};
+
+	template<>
 	struct ChannelConverter<float, std::uint8_t> {
 		static constexpr uint8_t apply(float v) noexcept {
 			return static_cast<uint8_t>(std::clamp(v, 0.0f, 100.0f) * 255.0f + 0.5f);
@@ -351,11 +383,29 @@ namespace tc
 	template<Dim D>
 	using tcVec = tc::vec_base<int32_t, dim_count_v<D>>;
 
-	template<Channel C, class Dst, tc::cpu::PixelConcept P>
-	constexpr Dst channelLoad(const P& px) noexcept {
+
+
+
+	template <Channel C, typename Dst, tc::cpu::PixelConcept P>
+		requires (C == Channel::R || C == Channel::G || C == Channel::B || C == Channel::A)
+	constexpr Dst loadChannel(const P& px) {
 		using Src = typename P::template ChannelType<C>;
 		return ChannelConverter<Src, Dst>::apply(px.template get<C>());
 	}
+
+	template <Channel C, typename Dst, tc::cpu::PixelConcept P>
+		requires (C == Channel::Min)
+	constexpr Dst loadChannel(const P&) {
+		return channel_min<Dst>();
+	}
+
+	template <Channel C, typename Dst, tc::cpu::PixelConcept P>
+		requires (C == Channel::Max)
+	constexpr Dst loadChannel(const P&) {
+		return channel_max<Dst>();
+	}
+
+
 
 	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
 	auto imageLoad(const ImageBinding<G, D, P, B, S>& image, tcVec<D> texCoord)
@@ -368,13 +418,15 @@ namespace tc
 		using gpuTraits = GPUFormatTraits<G>;
 		using dst_t = typename gpuTraits::ChannelType;
 		using vec_t = typename gpuTraits::VectorType;
-		vec_t result{
-			channelLoad<Channel::R,dst_t,P>(px),
-			channelLoad<Channel::G,dst_t,P>(px),
-			channelLoad<Channel::B,dst_t,P>(px),
-			channelLoad<Channel::A,dst_t,P>(px)
-		};
-		return result;
+
+		static_assert(std::size(gpuTraits::channels) == 4,
+			"GPUFormatTraits::channels must define 4 components.");
+
+		dst_t r = loadChannel<gpuTraits::channels[0], dst_t, P>(px);
+		dst_t g = loadChannel<gpuTraits::channels[1], dst_t, P>(px);
+		dst_t b = loadChannel<gpuTraits::channels[2], dst_t, P>(px);
+		dst_t a = loadChannel<gpuTraits::channels[3], dst_t, P>(px);
+		return vec_t{ r,g,b,a };
 	}
 
 	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
@@ -386,7 +438,7 @@ namespace tc
 	template<Channel C, class Src, tc::cpu::PixelConcept P>
 	constexpr void channelStore(P& px, Src value) noexcept {
 		using dst_t = typename P::template ChannelType<C>;
-		px.template set<C>(ChannelConverter<Src,dst_t>::apply(value));
+		px.template set<C>(ChannelConverter<Src, dst_t>::apply(value));
 	}
 
 	template<tc::InternalFormat G, tc::Dim D, tc::cpu::PixelConcept P, unsigned B, unsigned S>
@@ -401,9 +453,9 @@ namespace tc
 
 		using src_t = typename GPUFormatTraits<G>::ChannelType;
 		auto& px = (*buf)[texCoord];
-		channelStore<Channel::R,src_t, P>(px,value.x);
-		channelStore<Channel::G,src_t, P>(px,value.y);
-		channelStore<Channel::B,src_t, P>(px,value.z);
-		channelStore<Channel::A,src_t, P>(px,value.w);
+		channelStore<Channel::R, src_t, P>(px, value.x);
+		channelStore<Channel::G, src_t, P>(px, value.y);
+		channelStore<Channel::B, src_t, P>(px, value.z);
+		channelStore<Channel::A, src_t, P>(px, value.w);
 	}
 }

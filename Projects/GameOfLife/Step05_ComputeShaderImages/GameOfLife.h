@@ -27,8 +27,7 @@ struct [[clang::annotate("kernel")]] GameOfLifeKernel
 		ivec2 coordinate = ivec2(gId.x+pad, gId.y+pad);
 
 		bool alive = imageLoad(inData, coordinate).x;
-		for (int ki = 0; ki < kernelIndices.size(); ++ki)
-		{
+		for (int ki = 0; ki < kernelIndices.size(); ++ki) {
 			n += imageLoad(inData, coordinate + kernelIndices[ki]).x;
 		}
 

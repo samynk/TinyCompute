@@ -16,11 +16,13 @@ namespace GameOfLife
 	
 		bool OnUserCreate() override
 		{
-			k.set0(8, 7);
-			k.set0(7, 8);
-			k.set0(8, 8);
-			k.set0(8, 9);
-			k.set0(9, 9);
+			size_t hw = k.getWidth()/2;
+			size_t hh = k.getHeight() / 2;
+			k.set0(hw + 1, hh);
+			k.set0(hw, hh + 1);
+			k.set0(hw + 1, hh + 1);
+			k.set0(hw + 1, hh + 2);
+			k.set0(hw + 2, hh + 2);
 			
 			return true;
 		}
@@ -39,7 +41,7 @@ namespace GameOfLife
 					FillRect(x * m_Scale, y * m_Scale, m_Scale, m_Scale, color);
 				}
 			}
-			if (m_Delay > 500) {
+			if (m_Delay > 10) {
 				k.dispatch();
 				k.swapBuffers();
 				m_Delay = 0;
@@ -48,7 +50,7 @@ namespace GameOfLife
 			return true;
 		}
 	private:
-		GameOfLife::Kernel k{ 16,16,1 };
+		GameOfLife::Kernel k{ 32,32,1 };
 		int32_t m_Scale{ 20 };
 		int32_t m_Delay{ 0 };
 	};
@@ -57,7 +59,7 @@ int main()
 {
 	using namespace GameOfLife;
 	GameOfLifeWindow demo;
-	if (demo.Construct(16*20, 16*20, 1, 1))
+	if (demo.Construct(32*20, 32*20, 1, 1))
 	{
 		demo.Start();
 	}
