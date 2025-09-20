@@ -39,10 +39,10 @@ void RayTracerWindow::init(SurfaceRenderer& renderer)
 
 	m_pSpheres = std::make_unique<SphereBuffer>(4);
 
-	(*m_pSpheres)[0] = { tc::vec3{ 0.0,0.75,3.0f},0.8f , tc::vec4(1, .5, 0.2, 1) };
-	(*m_pSpheres)[1] = { tc::vec3{ 0.7,-0.25,3},0.8f , tc::vec4(0.1, 1, 0.1, 1) };
+	(*m_pSpheres)[0] = { tc::vec3{ 0.0,0.75,3.0f}, 0.8 , tc::vec4(1, .5, 0.2, 1) };
+	(*m_pSpheres)[1] = { tc::vec3{ 0.7,-0.25,3}, 0.8 , tc::vec4(0.1, 1, 0.1, 1) };
 	(*m_pSpheres)[2] = { tc::vec3{ 0,-50,48}, 60.0 , tc::vec4(0.1, 0.2, 1, 1) };
-	(*m_pSpheres)[3] = { tc::vec3{ -0.7,-0.25,3},0.8 , tc::vec4(1, 0.2, 1, 1) };
+	(*m_pSpheres)[3] = { tc::vec3{ -0.7,-0.25,3}, 0.8 , tc::vec4(1, 0.2, 1, 1) };
 
 	m_SphereRayTracer.nrOfSpheres = 4;
 	backend.uploadBuffer(*m_pSpheres);
@@ -57,12 +57,6 @@ void RayTracerWindow::compute(SurfaceRenderer& renderer)
 	tc::ivec2 dim{ renderer.getWidth(), renderer.getHeight() };
 	computeRays(renderer, dim);
 	computeScene(renderer, dim);
-
-	if (renderer.getRenderBuffer()->isOnCPU())
-	{
-		tc::gpu::GPUBackend gpuBackend;
-		gpuBackend.uploadImage<tc::InternalFormat::RGBA8>(*renderer.getRenderBuffer());
-	}
 }
 
 void RayTracerWindow::computeRays(SurfaceRenderer& renderer,tc::ivec2 dim)

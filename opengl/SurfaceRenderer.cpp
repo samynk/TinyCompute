@@ -37,9 +37,18 @@ SurfaceRenderer::~SurfaceRenderer()
 void SurfaceRenderer::init()
 {
 	createShaderProgram();
-	tc::gpu::GPUBackend gpu;
-	gpu.uploadImage<tc::InternalFormat::RGBA8>(m_FullScreenImage);
+	
+	updateTexture();
 	setupQuad();
+}
+
+void SurfaceRenderer::updateTexture()
+{
+	if (m_FullScreenImage.isOnCPU())
+	{
+		tc::gpu::GPUBackend gpu;
+		gpu.uploadImage<tc::InternalFormat::RGBA8>(m_FullScreenImage);
+	}
 }
 
 void SurfaceRenderer::createShaderProgram()

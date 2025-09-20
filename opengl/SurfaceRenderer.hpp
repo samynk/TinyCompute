@@ -52,6 +52,7 @@ public:
     SurfaceRenderer& operator=(SurfaceRenderer&&) = delete;
 
     void init();
+    void updateTexture();
     void drawQuadWithTexture();
 
     tc::BufferResource<tc::cpu::RGBA8UI, tc::Dim::D2>* getRenderBuffer() 

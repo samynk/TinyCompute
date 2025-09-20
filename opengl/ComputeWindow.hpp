@@ -117,6 +117,8 @@ void ComputeWindow<C>::renderLoop()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		m_Compute.compute(m_SurfaceRenderer);
+		m_SurfaceRenderer.updateTexture();
+
 		m_SurfaceRenderer.drawQuadWithTexture();
 
 		showFPS();
