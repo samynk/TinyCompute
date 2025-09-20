@@ -54,8 +54,8 @@ void GameOfLifeWindow::init(SurfaceRenderer& renderer)
 
 void GameOfLifeWindow::compute(SurfaceRenderer& renderer)
 {
-	//using Backend = tc::gpu::GPUBackend;
-	using Backend = tc::CPUBackend;
+	using Backend = tc::gpu::GPUBackend;
+	//using Backend = tc::CPUBackend;
 	Backend b;
 	b.useKernel(m_GameOfLife);
 	b.bindImage(m_GameOfLife.inData);

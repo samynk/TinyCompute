@@ -12,4 +12,4 @@ set_target_properties(swizzleforge_demo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-add_dependencies(swizzleforge_demo sf_transpile) 
+add_dependencies(swizzleforge_demo TinyComputeTranspile) 

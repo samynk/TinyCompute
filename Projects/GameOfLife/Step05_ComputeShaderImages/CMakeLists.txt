@@ -25,8 +25,8 @@ get_target_property(TC_INCLUDE_DIR TinyCompute SOURCE_DIR)
 # 1) Transpile C++  →  GLSL
 add_custom_command(
     TARGET ${ProjectName}
-    COMMAND sf_transpile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${TC_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
-    DEPENDS sf_transpile  ${KERNEL_SRC} ${TRANSPILER_FLAGS_FILE}
+    COMMAND TinyComputeTranspile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${TC_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
+    DEPENDS TinyComputeTranspile  ${KERNEL_SRC} ${TRANSPILER_FLAGS_FILE}
     COMMENT "Transpiling ${KERNEL_SRC}"
     USES_TERMINAL 
 )
@@ -48,5 +48,5 @@ PUBLIC
 #    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 #)
 
-add_dependencies(${ProjectName} sf_transpile ComputeLibOpenGL) 
+add_dependencies(${ProjectName} TinyComputeTranspile ComputeLibOpenGL) 
 set_target_properties(${ProjectName} PROPERTIES FOLDER "03-Examples/C-GameOfLife")

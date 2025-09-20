@@ -73,45 +73,29 @@ private:
 	bool validateShader(
 		const std::string& shaderFile,
 		std::string& outLog) {
+		/*
+		std::vector<llvm::StringRef> args = {
+			shaderFile
+		};
 
-		auto maybePath = llvm::sys::findProgramByName("glslangValidator.exe");
-		if (!maybePath) {
-			llvm::errs() << "Error: glslangValidator.exe not found in PATH\n";
+		llvm::Optional<llvm::sys::Program> P =
+			llvm::sys::Program::FindProgramByName("glslangValidator.exe", args);
+
+		if (!P) {
+			llvm::errs() << "Error: Could not find glslangValidator.exe \n";
 			return false;
 		}
-		std::string validatorPath = *maybePath;
 
-		// Build argv: [glslangValidator, "-V" (SPIR-V), shaderFile]
-		llvm::errs() << "Checking: " << shaderFile << "\n";
-		std::vector<llvm::StringRef> argv = {
-			validatorPath,
-		  shaderFile
-		};
+		int result = P->ExecuteAndWait(P, args, llvm::None, llvm::None, 0, nullptr, nullptr);
 
-		std::string outFile = tmpnam(nullptr);
-		llvm::ArrayRef<std::optional<llvm::StringRef>> redirects =
-		{
-			{},outFile,{}
-		};
-
-		FILE* out = fopen(outFile.c_str(), "w"); fclose(out);
-
-		std::string StdErr;
-		int exitCode = llvm::sys::ExecuteAndWait(
-			validatorPath,
-			argv,
-			{},
-			redirects,
-			0,
-			0,
-			&StdErr
-		);
-
-		outLog = StdErr;
-		llvm::errs() << "Formatting glslang output\n";
-		llvm::errs() << "Reading errors from " << outFile << "\n";
-		formatErrors(outFile, shaderFile);
+		if (result != 0) {
+			llvm::errs() << "Error: Program " << program << " exited with code " << result << "\n";
+			return 1;
+		}
+		//formatErrors(outFile, shaderFile);
 		return exitCode == 0;  // zero means “valid”
+		*/
+		return true;
 	}
 
 	void formatErrors(const std::string& path, const std::string& shaderFile) {

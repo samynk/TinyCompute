@@ -80,7 +80,7 @@ add_subdirectory(opengl)
 add_subdirectory(transpiler)
 
 
-if (SWIZZLEFORGE_BUILD_TESTS)
+if (TINY_COMPUTE_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
@@ -102,7 +102,7 @@ function(set_working_dir_to_resources target)
 endfunction()
 
 
-if (SWIZZLEFORGE_BUILD_EXAMPLES)
+if (TINY_COMPUTE_BUILD_EXAMPLES)
     add_subdirectory(examples)
     add_subdirectory(Projects/Project01)
     add_subdirectory(Projects/Project02)
@@ -144,7 +144,3 @@ foreach(g gtest gtest_main gmock gmock_main)
 endforeach()
 
 set_target_properties(TinyCompute           PROPERTIES FOLDER "01-Core")
-set_target_properties(AssetLib              PROPERTIES FOLDER "01-Core")
-set_target_properties(sf_transpile           PROPERTIES FOLDER "02‑Tools")
-set_target_properties(swizzleforge_demo      PROPERTIES FOLDER "03‑Examples")
-set_target_properties(swizzleforge_tests     PROPERTIES FOLDER "04‑Tests")

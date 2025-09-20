@@ -40,5 +40,5 @@ PUBLIC
 #    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 #)
 
-add_dependencies(Project01 sf_transpile ComputeLibOpenGL) 
+add_dependencies(Project01 TinyComputeTranspile ComputeLibOpenGL) 
 set_target_properties(${ProjectName} PROPERTIES FOLDER "03‑Examples")
