@@ -1,31 +1,42 @@
-function(configure PROJECT_NAME PROJECT_FOLDER)
-    # Find required OpenGL package
-    find_package(OpenGL REQUIRED)
+function(configureTinyCompute ProjectName PROJECT_FOLDER )
+    set(KERNEL_SRC ${ARGN})
+    list(TRANSFORM KERNEL_SRC PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
+    
+    SET_WORKING_DIR_TO_RESOURCES(${ProjectName})
+    target_compile_features(${ProjectName} PUBLIC cxx_std_20)
 
-    # Set C++ standard if CMake version is greater than 3.12
-    if (CMAKE_VERSION VERSION_GREATER 3.12)
-        set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
-    endif()
-
-    # Include directories for OpenGL, GLM, GLEW, and STB
-    target_include_directories(
-        ${PROJECT_NAME} 
-        PRIVATE
-        ${OPENGL_INCLUDE_DIRS}
-        ${glew_SOURCE_DIR}/include
-        ${stb_SOURCE_DIR}
+    set(GLSL_OUT ${CMAKE_CURRENT_BINARY_DIR})
+    set(TRANSPILER_FLAGS_FILE "${CMAKE_CURRENT_BINARY_DIR}/sf_transpile_args.txt")
+    file(WRITE ${TRANSPILER_FLAGS_FILE}
+        "-std=c++20\n"
+        "-I${CMAKE_CURRENT_SOURCE_DIR}/include\n"
+        "-x\n"
+        "-c++\n"
+        "-fms-compatibility\n"
+        "-fms-extensions\n"
     )
 
-    # Link libraries to the executable target
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL glm::glm glfw libglew_static ComputeLibOpenGL)
+    get_target_property(TC_INCLUDE_DIR TinyCompute SOURCE_DIR)
+    add_custom_command(
+        TARGET ${ProjectName}
+        COMMAND TinyComputeTranspile  ${KERNEL_SRC} -o ${GLSL_OUT} -- -I${TC_INCLUDE_DIR} -std=c++20 -x c++ -fms-compatibility -fms-extensions
+        DEPENDS TinyComputeTranspile  ${KERNEL_SRC} ${TRANSPILER_FLAGS_FILE}
+        COMMENT "Transpiling ${KERNEL_SRC}"
+        USES_TERMINAL 
+    )
 
-    # Copy the resources folder after build
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    add_custom_command(TARGET ${ProjectName} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_SOURCE_DIR}/Resources"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/"
+            "$<TARGET_FILE_DIR:${ProjectName}>/")
+
+    target_link_libraries(${ProjectName}
+        PUBLIC
+            ComputeLibOpenGL
+	        AssetLib
+            TinyCompute
     )
-    message("setting folder to ${PROJECT_FOLDER}")
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        FOLDER "${PROJECT_FOLDER}" )
+
+    add_dependencies(${ProjectName} TinyComputeTranspile ComputeLibOpenGL) 
+    set_target_properties(${ProjectName} PROPERTIES FOLDER ${PROJECT_FOLDER})
 endfunction()
