@@ -1,4 +1,4 @@
-Swizzleforge is a C++ library which allows developers to write compute shaders in pure C++. 
+TinyCompute is a C++ library which allows developers to write compute shaders in pure C++. 
 
 The major parts of the library are:
 
