@@ -246,7 +246,7 @@ namespace tc::gpu {
 				m_CompiledPrograms.insert_or_assign(key, std::move(shader));
 			}
 		}
-
+		// todo : make this better 
 		static inline std::unordered_map<std::string, ComputeShader> m_CompiledPrograms;
 	};
 }

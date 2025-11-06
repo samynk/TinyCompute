@@ -103,7 +103,7 @@ endfunction()
 
 
 if (TINY_COMPUTE_BUILD_EXAMPLES)
-    add_subdirectory(examples)
+    #add_subdirectory(examples)
     add_subdirectory(Projects/Project01)
     add_subdirectory(Projects/Project02)
     add_subdirectory(Projects/Project03)
